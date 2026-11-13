@@ -26,27 +26,28 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .iconbtn{width:44px;height:44px;border-radius:12px;background:var(--card);display:grid;place-items:center;font-size:18px;color:var(--dim);flex:none}
 .iconbtn:disabled{opacity:.35}
 .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
-.bars{display:grid;gap:12px}
-.bar .top{display:flex;justify-content:space-between;font-size:13px;color:var(--dim);margin-bottom:5px}
-.bar .top b{color:var(--text);font-weight:600;font-size:15px}
-.track{height:10px;border-radius:6px;background:var(--card2);overflow:hidden}
-.fill{height:100%;border-radius:6px;transition:width .3s}
-.left{font-size:12px;color:var(--faint);margin-top:3px}
-.bar.cap .left{color:var(--bad)}
-.meal h2{font-size:15px;margin:0 0 2px;display:flex;align-items:center;gap:8px}
-.meal h2 .tot{margin-left:auto;font-size:12px;color:var(--dim);font-weight:500}
+.rings{display:flex;gap:4px;padding:14px 6px}
+.ring{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center}
+.dial{position:relative;width:76px;height:76px;margin-bottom:6px}
+.dial b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:700}
+.rl{font-size:12px;font-weight:600}
+.rs{font-size:11px;color:var(--dim);min-height:16px}
+.rs.bad{color:var(--bad)}
+.mh{display:flex;align-items:center;gap:8px}
+.mh h2{font-size:15px;margin:0;flex:1}
+.tot{font-size:12px;color:var(--dim);font-weight:500;white-space:nowrap}
+.plus{width:44px;height:40px;border-radius:10px;background:var(--card2);color:var(--acc);display:grid;place-items:center;flex:none;font-size:22px;line-height:1}
+.plus:disabled{opacity:.4}
 .row{display:flex;align-items:center;gap:10px;width:100%;text-align:left}
 .row .n{flex:1;min-width:0}
 .row .n div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row small{color:var(--faint);display:block}
 .ent{padding:10px 0;border-top:1px solid var(--line)}
-.meal h2+.ent{border-top:0}
+.mh+.ent{border-top:0;margin-top:4px}
 .ent .m{text-align:right;font-size:13px;color:var(--dim);white-space:nowrap}
 .ent .m b{color:var(--text);font-weight:600}
 .ent.pending{opacity:.6}
 .empty{color:var(--faint);font-size:13px;padding:6px 0}
-.addbtn{margin-top:8px;width:100%;padding:11px;border-radius:12px;background:var(--card2);color:var(--acc);font-weight:600}
-.addbtn:disabled{opacity:.4}
 .banner{background:#2A2210;color:var(--warn);border-radius:12px;padding:10px 12px;margin-bottom:12px;font-size:13px;display:flex;gap:12px;align-items:center}
 .banner span{flex:1}
 .banner.err{background:#2A1216;color:var(--bad)}
@@ -63,8 +64,14 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .sh-body{overflow:auto;overscroll-behavior:contain;padding:0 14px calc(18px + env(safe-area-inset-bottom))}
 .search,.inp{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none}
 .search:focus,.inp:focus,.qty input:focus{border-color:var(--acc)}
-.frow{padding:11px 2px;border-bottom:1px solid var(--line)}
-.frow .k{color:var(--dim);font-size:13px;white-space:nowrap}
+.frow{padding:0 2px;border-bottom:1px solid var(--line);min-height:56px}
+.frow .n{padding:9px 0;text-align:left}
+.frow .plus{height:44px;border-radius:22px}
+.sec{font-size:12px;color:var(--dim);font-weight:600;margin:14px 0 2px}
+.added{display:flex;gap:8px;align-items:center;margin-top:10px;overflow-x:auto;scrollbar-width:none}
+.added span{font-size:12px;color:var(--dim);flex:none}
+.pill{background:#0E2530;color:var(--acc);font-size:13px;font-weight:600;padding:8px 12px;border-radius:18px;white-space:nowrap;flex:none}
+.done{background:var(--acc);color:#001318;font-weight:700;padding:10px 16px;border-radius:12px;min-height:44px;flex:none}
 .chips{display:flex;gap:8px;margin:12px 0}
 .chip{flex:1;padding:11px 0;border-radius:12px;background:var(--card);color:var(--dim);font-weight:600}
 .chip.on{background:var(--acc);color:#001318}
@@ -90,7 +97,7 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .setup{padding:40px 10px;text-align:center;color:var(--dim)}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
-@media (prefers-reduced-motion:reduce){.sheet,.scrim,.fill{transition:none!important}}
+@media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}}
 </style>
 </head>
 <body>
@@ -98,7 +105,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='2';
+const APP_VERSION='3';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner']];
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
 const MACROS=[['kcal','Calories','kcal','var(--kcal)',false],['net','Net carbs','g','var(--net)',true],['protein','Protein','g','var(--pro)',false],['fat','Fat','g','var(--fat)',false]];
@@ -132,6 +139,7 @@ let IDMAP=Q.length?ls.get('fl_idmap',{}):{}; // temp id of a just-created food -
 if(!Q.length)ls.del('fl_idmap');
 const realId=id=>IDMAP[id]||id;
 
+const newCid=()=>'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function apiErr(kind,msg){const e=new Error(msg);e.kind=kind;return e}
 async function api(body){
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),25000);
@@ -254,6 +262,7 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 // ---------- main screen ----------
+const RING=2*Math.PI*31; // length of a ring's circle
 function totals(es){const t={kcal:0,fat:0,protein:0,net:0};es.forEach(e=>MKEYS.forEach(m=>t[m]+=e[m]));return t}
 function banners(){
   let h='';
@@ -274,19 +283,20 @@ function render(){
   const d=v||{goals:{},entries:[]},g=d.goals||{},t=totals(d.entries),unloaded=ready&&S.data.partial&&!S.loading;
   let h=`<header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">‹</button><h1>${isToday?'Today':nice(S.date)}<span class="sub">${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></h1><button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>›</button><button class="iconbtn" aria-label="Goals and settings" data-act="goals" ${ready?'':'disabled'}>⚙</button></header>`;
   h+=banners();
-  h+='<div class="card bars">';
+  h+='<div class="card rings">';
   for(const [k,label,u,col,cap] of MACROS){
-    const goal=g[k]||0,val=t[k],pct=goal?Math.min(100,val/goal*100):0,over=goal&&val>goal+0.05,rem=goal-val;
-    const left=!ready?'&nbsp;':!goal?'No goal set':over?fmt(-rem)+' '+u+' over':fmt(rem)+' '+u+' left';
-    h+=`<div class="bar ${over&&cap?'cap':''}"><div class="top"><span>${label}</span><span><b>${ready?fmt(val):'–'}</b> / ${goal?fmt(goal):'–'} ${u}</span></div><div class="track"><div class="fill" style="width:${pct}%;background:${over&&cap?'var(--bad)':col}"></div></div><div class="left">${left}</div></div>`;
+    const goal=g[k]||0,val=t[k],frac=goal?Math.min(1,val/goal):0,over=goal&&val>goal+0.05,un=k==='kcal'?'':' g';
+    const sub=!ready?'&nbsp;':!goal?'No goal':over?fmt(val-goal)+un+' over':fmt(goal-val)+un+' left';
+    const arc=frac>0?`<circle cx="38" cy="38" r="31" fill="none" stroke="${over&&cap?'var(--bad)':col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(RING*frac).toFixed(1)} ${RING.toFixed(1)}" transform="rotate(-90 38 38)"/>`:'';
+    h+=`<div class="ring"><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--card2)" stroke-width="7"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></div>`;
   }
   h+='</div>';
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
-    h+=`<div class="card meal"><h2>${label}<span class="tot">${es.length?r0(mt.kcal)+' kcal · '+fmt(mt.net)+' g net':''}</span></h2>`;
-    if(!es.length)h+=`<div class="empty">${first?'Loading…':unloaded?'Not loaded':'Nothing yet'}</div>`;
+    const tot=es.length?r0(mt.kcal)+' kcal · '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
+    h+=`<div class="card meal"><div class="mh"><h2>${label}</h2><span class="tot">${tot}</span><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>+</button></div>`;
     for(const e of es)h+=`<button class="row ent ${e.pending?'pending':''}" data-act="entry" data-id="${esc(e.id)}"><div class="n"><div>${esc(e.food)}</div><small>${fmt(e.qty)} ${esc(e.unit)}</small></div><div class="m"><b>${r0(e.kcal)}</b> kcal<br>${fmt(e.net)} g net</div></button>`;
-    h+=`<button class="addbtn" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>+ Add to ${label.toLowerCase()}</button></div>`;
+    h+='</div>';
   }
   app.innerHTML=h;
 }
@@ -300,6 +310,7 @@ function navReplace(fn){STACK[STACK.length-1]=fn;fn()}
 function hideLayer(){layer.classList.remove('open');if(document.activeElement)document.activeElement.blur()}
 function closeAll(){const n=STACK.length;if(!n)return;STACK.length=0;hideLayer();history.go(-n)}
 function back(){if(STACK.length)history.back()}
+const leave=()=>STACK.length>1?back():closeAll(); // finished with this sheet: back to the food list if that's where we came from
 addEventListener('popstate',()=>{if(!STACK.length)return;STACK.pop();if(STACK.length)STACK[STACK.length-1]();else hideLayer()});
 $('#scrim').addEventListener('click',closeAll);
 const head=(title,extra)=>`<div class="grab"></div><div class="sh-head"><h3>${title}</h3>${extra||''}<button class="iconbtn" aria-label="Close" data-act="close">✕</button></div>`;
@@ -309,26 +320,61 @@ const head=(title,extra)=>`<div class="grab"></div><div class="sh-head"><h3>${ti
     if(!inHead&&(b.scrollTop>0||e.target.closest('input')))return void(y0=null);
     y0=e.touches[0].clientY;dy=0;t0=Date.now()},{passive:true});
   sheetEl.addEventListener('touchmove',e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(dy>0){sheetEl.style.transition='none';sheetEl.style.transform='translateY('+dy+'px)'}},{passive:true});
-  const end=()=>{if(y0==null)return;sheetEl.style.transition='';sheetEl.style.transform='';const fast=dy/Math.max(1,Date.now()-t0)>0.5;if(dy>120||(fast&&dy>40))closeAll();y0=null};
+  const end=()=>{if(y0==null)return;sheetEl.style.transition='';sheetEl.style.transform='';const fast=dy/Math.max(1,Date.now()-t0)>0.5;if(dy>120||(fast&&dy>40))back();y0=null};
   sheetEl.addEventListener('touchend',end);sheetEl.addEventListener('touchcancel',end);
 })();
 // if the browser doesn't shrink the page for the keyboard, lift the sheet above it ourselves
 if(window.visualViewport){const vv=visualViewport,f=()=>{const kb=innerHeight-vv.height-vv.offsetTop;document.documentElement.style.setProperty('--kb',(kb>120?kb:0)+'px')};vv.addEventListener('resize',f);vv.addEventListener('scroll',f)}
 
 // ----- add: pick a food -----
-let AD={meal:'lunch',q:''};
+let AD={meal:'lunch',q:'',added:[]}; // added = what's been logged since this list was opened
 function perText(f){return f.unit==='serving'?'per '+f.label:'per 100 '+f.unit}
-function openAdd(meal){AD={meal:meal||mealNow(),q:''};nav(sheetAdd)}
+const usualQty=f=>f.defQty||(f.unit==='serving'?1:100);
+const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); // so "espanola" finds "Española"
+function openAdd(meal){AD={meal:meal||mealNow(),q:'',added:[]};nav(sheetAdd)}
 function sheetAdd(){
-  sheetEl.innerHTML=head('Add to '+AD.meal,'<button class="link" data-act="newFood">+ New food</button>')+`<div class="sh-body"><input class="search" id="q" placeholder="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"><div id="flist"></div></div>`;
+  sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${AD.meal}</h3><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><input class="search" id="q" placeholder="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"><div id="added"></div><div id="flist"></div></div>`;
   $('#q').addEventListener('input',e=>{AD.q=e.target.value;listFoods()});
   listFoods();
 }
+// foods logged at this meal on 2+ of the days this phone remembers (about the last week)
+function usualAt(meal){
+  const n={},days=ls.get('fl_days',{});
+  Object.keys(days).forEach(k=>{const seen={};(days[k].entries||[]).forEach(e=>{if(e.meal===meal&&!seen[e.foodId]){seen[e.foodId]=1;n[e.foodId]=(n[e.foodId]||0)+1}})});
+  return n;
+}
 function listFoods(){
-  const words=AD.q.toLowerCase().split(/\s+/).filter(Boolean);
-  const fs=view().foods.filter(f=>words.every(w=>f.name.toLowerCase().includes(w))).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
-  $('#flist').innerHTML=fs.length?fs.map(f=>`<button class="row frow" data-act="pick" data-id="${esc(f.id)}"><div class="n"><div>${esc(f.name)}</div><small>${perText(f)}</small></div><div class="k">${r0(f.kcal)} kcal · ${fmt(f.net)} net</div></button>`).join('')
-    :`<div class="empty" style="padding:16px 0">No match. <button class="link" data-act="newFood">Create "${esc(AD.q)}"</button></div>`;
+  if(!$('#flist'))return;
+  const v=view(),words=norm(AD.q).split(/\s+/).filter(Boolean);
+  const fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
+  const row=f=>{const q=usualQty(f),k=q/f.per;return `<div class="row frow"><button class="n" data-act="pick" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${fmt(q)} ${esc(f.label)} · ${r0(f.kcal*k)} kcal · ${fmt(f.net*k)} g net</small></button><button class="plus" aria-label="Add ${fmt(q)} ${esc(f.label)} of ${esc(f.name)}" data-act="quick" data-id="${esc(f.id)}">+</button></div>`};
+  const mine=v.entries.filter(e=>AD.added.includes(e.id));
+  $('#added').innerHTML=mine.length?`<div class="added"><span>Added</span>${mine.map(e=>`<button class="pill" data-act="entry" data-id="${esc(e.id)}">${esc(cut(e.food,18))} · ${fmt(e.qty)} ${esc(e.unit)}</button>`).join('')}</div>`:'';
+  let usual=[];
+  if(!words.length){const n=usualAt(AD.meal),here=new Set(v.entries.filter(e=>e.meal===AD.meal).map(e=>e.foodId));
+    usual=fs.filter(f=>n[f.id]>=2&&!here.has(f.id)).sort((a,b)=>n[b.id]-n[a.id]).slice(0,3)}
+  const rest=fs.filter(f=>!usual.includes(f));
+  $('#flist').innerHTML=!fs.length?`<div class="empty" style="padding:16px 0">No match. <button class="link" data-act="newFood">Create "${esc(AD.q)}"</button></div>`
+    :(usual.length?`<div class="sec">Usual at ${AD.meal}</div>${usual.map(row).join('')}<div class="sec">All foods, most used first</div>`:'')+rest.map(row).join('');
+}
+// one tap: log the usual amount and stay in the list
+function logFood(f,qty,meal){
+  const cid=newCid();AD.added.push(cid);
+  submit({action:'add',cid,date:S.date,meal,foodId:f.id,qty});
+  if(navigator.vibrate)navigator.vibrate(8);
+  toast('Added '+fmt(qty)+' '+f.label+' · '+cut(f.name,20),'Undo',()=>undoAdd(cid));
+}
+function quick(id){
+  const f=view().foods.find(x=>x.id===id);if(!f)return;
+  logFood(f,usualQty(f),AD.meal);
+  if(AD.q){AD.q='';$('#q').value=''}
+  listFoods();
+}
+function undoAdd(cid){
+  AD.added=AD.added.filter(x=>x!==cid);
+  const job=Q.find(j=>j.action==='add'&&j.cid===cid);
+  if(!(job&&unsend(job)))submit({action:'del',id:cid}); // already on its way to the sheet: remove it there
+  listFoods();
 }
 
 // ----- amount: add a food, or change an entry -----
@@ -364,25 +410,24 @@ function amMacros(){
   $('#amgo').disabled=!(AM.qty>0);
 }
 function bump(n){AM.qty=Math.max(0,r1((AM.qty||0)+n));$('#qty').value=AM.qty;amMacros()}
-const newCid=()=>'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function amSave(){
   if(!(AM.qty>0))return;
   const {e,f}=amParts();
   if(AM.eid){
-    if(!e)return closeAll();
+    if(!e)return leave();
     const job={action:'edit',id:e.id};
     if(AM.qty!==AM.was)job.qty=AM.qty;
     if(AM.meal!==e.meal)job.meal=AM.meal;
-    closeAll();if(job.qty||job.meal)submit(job);return;
+    if(job.qty||job.meal)submit(job);
+    return leave();
   }
-  if(!f)return closeAll();
-  const meal=AM.meal;
-  submit({action:'add',cid:newCid(),date:S.date,meal,foodId:f.id,qty:AM.qty});
-  if(navigator.vibrate)navigator.vibrate(8);
-  closeAll();toast('Added '+cut(f.name,26),'Add more',()=>openAdd(meal));
+  if(!f)return leave();
+  logFood(f,AM.qty,AM.meal);AD.q='';
+  leave();
 }
 function amDelete(){
-  const {e}=amParts();closeAll();if(!e)return;
+  const {e}=amParts();leave();if(!e)return;
+  AD.added=AD.added.filter(x=>x!==e.id);
   // not sent yet? then just cancel it rather than sending an add followed by a delete
   const mine=j=>(j.action==='add'&&j.cid===e.id)||(j.action==='edit'&&j.id===e.id);
   const unsentAdd=Q.find(j=>j.action==='add'&&j.cid===e.id&&j.qid!==inFlight);
@@ -434,7 +479,7 @@ function ffSave(){
 function hideFood(){
   const {f}=amParts();if(!f)return closeAll();
   const job={action:'hideFood',id:f.id,after:Date.now()+UNDO_MS};submit(job);back();
-  toast('Removed '+cut(f.name,26),'Undo',()=>{if(!unsend(job))toast('Too late to undo here. Clear its "hidden" cell in the sheet.')});
+  toast('Removed '+cut(f.name,26),'Undo',()=>{if(unsend(job))listFoods();else toast('Too late to undo here. Clear its "hidden" cell in the sheet.')});
 }
 
 // ----- goals -----
@@ -458,7 +503,7 @@ function saveGoals(){
 // ---------- every tap goes through here ----------
 const ACT={
   day:d=>go(Number(d.n)),goals:()=>nav(sheetGoals),add:d=>openAdd(d.meal),entry:d=>openEntry(d.id),
-  close:closeAll,newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
+  close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
   bump:d=>bump(Number(d.n)),meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
   ffUnit:d=>ffUnit(d.u),ffSave,saveGoals,
