@@ -27,12 +27,20 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .iconbtn:disabled{opacity:.35}
 .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
 .rings{display:flex;gap:4px;padding:14px 6px}
-.ring{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center}
+.ring{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:12px;padding:2px 0}
 .dial{position:relative;width:76px;height:76px;margin-bottom:6px}
 .dial b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:700}
 .rl{font-size:12px;font-weight:600}
 .rs{font-size:11px;color:var(--dim);min-height:16px}
 .rs.bad{color:var(--bad)}
+.sum{font-size:13px;color:var(--dim);margin-bottom:2px}
+.sum b{color:var(--text);font-size:22px;font-weight:700}
+.chips.four .chip{font-size:13px;padding:10px 0}
+.src{padding:9px 0;border-bottom:1px solid var(--line)}
+.src .v{text-align:right;font-size:13px;color:var(--dim);white-space:nowrap}
+.src .v b{color:var(--text);font-weight:600}
+.share{height:4px;border-radius:2px;background:var(--card2);margin-top:6px;overflow:hidden}
+.share i{display:block;height:100%;border-radius:2px}
 .mh{display:flex;align-items:center;gap:8px}
 .mh h2{font-size:15px;margin:0;flex:1}
 .tot{font-size:12px;color:var(--dim);font-weight:500;white-space:nowrap}
@@ -105,7 +113,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='3';
+const APP_VERSION='4';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner']];
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
 const MACROS=[['kcal','Calories','kcal','var(--kcal)',false],['net','Net carbs','g','var(--net)',true],['protein','Protein','g','var(--pro)',false],['fat','Fat','g','var(--fat)',false]];
@@ -288,7 +296,7 @@ function render(){
     const goal=g[k]||0,val=t[k],frac=goal?Math.min(1,val/goal):0,over=goal&&val>goal+0.05,un=k==='kcal'?'':' g';
     const sub=!ready?'&nbsp;':!goal?'No goal':over?fmt(val-goal)+un+' over':fmt(goal-val)+un+' left';
     const arc=frac>0?`<circle cx="38" cy="38" r="31" fill="none" stroke="${over&&cap?'var(--bad)':col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(RING*frac).toFixed(1)} ${RING.toFixed(1)}" transform="rotate(-90 38 38)"/>`:'';
-    h+=`<div class="ring"><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--card2)" stroke-width="7"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></div>`;
+    h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--card2)" stroke-width="7"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></button>`;
   }
   h+='</div>';
   for(const [m,label] of MEALS){
@@ -482,6 +490,21 @@ function hideFood(){
   toast('Removed '+cut(f.name,26),'Undo',()=>{if(unsend(job))listFoods();else toast('Too late to undo here. Clear its "hidden" cell in the sheet.')});
 }
 
+// ----- tap a ring: where today's total came from -----
+let RG={k:'net'};
+function sheetRing(){
+  const v=view(),[k,label,u,col,cap]=MACROS.find(m=>m[0]===RG.k),goal=(v.goals||{})[k]||0,tot=totals(v.entries)[k],un=k==='kcal'?' kcal':' g';
+  const by={};v.entries.forEach(e=>{const x=by[e.food]||(by[e.food]={name:e.food,val:0,n:0,qty:0,unit:e.unit});x.val+=e[k];x.n++;x.qty+=e.qty});
+  const rows=Object.values(by).filter(x=>x.val>=0.05).sort((a,b)=>b.val-a.val),top=rows.length?rows[0].val:1,over=goal&&tot>goal+0.05;
+  const left=!goal?'no goal set':over?fmt(tot-goal)+un+' over':fmt(goal-tot)+un+' left';
+  sheetEl.innerHTML=head(label+(S.date===today()?' today':' · '+nice(S.date)))+`<div class="sh-body">
+  <div class="sum"><b>${fmt(tot)}</b> of ${goal?fmt(goal):'–'}${un} · <span class="${over&&cap?'danger':''}">${left}</span></div>
+  <div class="chips four">${MACROS.map(m=>`<button class="chip ${m[0]===k?'on':''}" data-act="ringK" data-k="${m[0]}">${m[1]}</button>`).join('')}</div>
+  ${rows.length?rows.map(x=>`<div class="src"><div class="row"><div class="n"><div>${esc(x.name)}</div><small>${fmt(x.qty)} ${esc(x.unit)}${x.n>1?' · '+x.n+' entries':''}</small></div><div class="v"><b>${fmt(x.val)}</b>${un}<br>${tot?r0(x.val/tot*100):0}%</div></div><div class="share"><i style="width:${x.val/top*100}%;background:${col}"></i></div></div>`).join('')
+    :`<div class="empty" style="padding:16px 0">${v.entries.length?'Nothing you\'ve logged has any.':'Nothing logged yet.'}</div>`}
+  </div>`;
+}
+
 // ----- goals -----
 function sheetGoals(){
   const v=view(),g=v.goals||{};
@@ -503,6 +526,7 @@ function saveGoals(){
 // ---------- every tap goes through here ----------
 const ACT={
   day:d=>go(Number(d.n)),goals:()=>nav(sheetGoals),add:d=>openAdd(d.meal),entry:d=>openEntry(d.id),
+  ring:d=>{RG={k:d.k};nav(sheetRing)},ringK:d=>{RG.k=d.k;sheetRing()},
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
   bump:d=>bump(Number(d.n)),meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
