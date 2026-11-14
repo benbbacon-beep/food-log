@@ -1,5 +1,5 @@
 // Bump CACHE with every release: that is what makes phones pick up the new version.
-const CACHE='food-log-v12';
+const CACHE='food-log-v13';
 const SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','jakarta.woff2'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 // only clear this app's own old caches: Tap Logger lives on the same web address and has its own

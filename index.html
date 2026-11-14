@@ -10,9 +10,18 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preload" href="jakarta.woff2" as="font" type="font/woff2" crossorigin>
 <script>/* colour theme before first paint, so it never flashes the wrong colours */
+// any colour from the wheel: pick readable text for it, and keep buttons visible on light or dark cards
+window.flVars=function(hex,dark){
+  var n=parseInt(hex.slice(1),16),c=[n>>16&255,n>>8&255,n&255].map(function(v){v/=255;return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4)});
+  var L=.2126*c[0]+.7152*c[1]+.0722*c[2],white=1.05/(L+.05)>=(L+.05)/.06;
+  var acc=hex;if(!dark&&L>.72)acc='#111114';if(dark&&L<.035)acc='#F1F2F6';
+  var a=acc===hex?L:(acc==='#111114'?0:.9),accWhite=1.05/(a+.05)>=(a+.05)/.06;
+  return{'--band':hex,'--onband':white?'#FFFFFF':'#111114','--bandbtn':white?'rgba(255,255,255,.16)':'rgba(0,0,0,.08)','--acc':acc,'--onacc':accWhite?'#FFFFFF':'#111114'};
+};
 (function(){var t={};try{t=JSON.parse(localStorage.getItem('fl_theme'))||{}}catch(e){}
 var d=document.documentElement,m=t.mode||'light',band=t.band||'ink';if(m==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
-d.dataset.mode=m;d.dataset.band=band})();</script>
+d.dataset.mode=m;d.dataset.band=band;
+if(band==='custom'&&/^#[0-9a-f]{6}$/i.test(t.custom||'')){var v=flVars(t.custom,m==='dark');for(var k in v)d.style.setProperty(k,v[k])}})();</script>
 <style>
 @font-face{font-family:Jakarta;src:url(jakarta.woff2) format('woff2');font-weight:200 800;font-display:swap}
 /* light (default) */
@@ -159,6 +168,16 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .swatches{display:flex;gap:12px}
 .sw{width:44px;height:44px;border-radius:22px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25);display:grid;place-items:center}
 .sw[aria-checked=true]{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--text)}
+.swatches{flex-wrap:wrap}
+.swc{background:conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.cw{position:relative;width:min(240px,70vw);aspect-ratio:1;border-radius:50%;margin:20px auto 14px;touch-action:none;cursor:crosshair;
+  background:radial-gradient(closest-side,#fff,rgba(255,255,255,0)),conic-gradient(#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)}
+.cwd{position:absolute;inset:0;border-radius:50%;background:#000;pointer-events:none}
+.knob{position:absolute;left:-14px;top:-14px;width:28px;height:28px;border-radius:14px;border:3px solid #fff;box-shadow:0 1px 6px rgba(0,0,0,.45);pointer-events:none}
+.crow{display:flex;align-items:center;gap:12px}
+.crow input{flex:1;-webkit-appearance:none;appearance:none;height:14px;border-radius:7px;outline:none}
+.crow input::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:14px;background:#fff;border:1px solid rgba(0,0,0,.2);box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.chex{font-size:13px;color:var(--dim);font-weight:600;min-width:64px;text-align:right}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom) + var(--kb));transform:translateX(-50%);background:var(--toastbg);color:var(--toastfg);padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px;z-index:20;display:none;gap:12px;align-items:center;max-width:90vw}
 .toast{pointer-events:none}
 .toast button{color:var(--toastacc);font-weight:700;white-space:nowrap;pointer-events:auto;padding:6px 4px}
@@ -173,7 +192,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='12';
+const APP_VERSION='13';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -380,10 +399,10 @@ function render(){
     h+=`<div class="card meal"><div class="mh"><span class="mi" style="background:var(--m-${m})">${MI[m]}</span><h2>${label}<span class="tot">${tot}</span></h2><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>`;
     if(!es.length)delete S.pg['m:'+m];
     if(es.length){
-      // swipe the card: what's in it, then its macros, then the rings chart for this meal
+      // swipe the card: what's in it, then the rings chart for this meal, then its macros
       h+=`<div class="pages" data-sw="m:${m}"><div class="pg" aria-label="${label} foods">`;
       for(const e of es)h+=`<button class="row ent ${e.pending?'pending':''}" data-act="entry" data-id="${esc(e.id)}"><div class="n"><div>${esc(e.food)}</div><small>${fmt(e.qty)} ${esc(e.unit)}</small></div><div class="m"><b>${r0(e.kcal)}</b> kcal<br>${fmt(e.net)} g net</div></button>`;
-      h+=`</div><div class="pg" aria-label="${label} macros">${mealMacros(mt,g)}</div><div class="pg" aria-label="${label} chart">${chart(mt,g,true,true)}</div></div>${dots('m:'+m,3)}`;
+      h+=`</div><div class="pg" aria-label="${label} chart">${chart(mt,g,true,true)}</div><div class="pg" aria-label="${label} macros">${mealMacros(mt,g)}</div></div>${dots('m:'+m,3)}`;
     }
     h+='</div>';
   }
@@ -460,7 +479,7 @@ const head=(title,extra)=>`<div class="grab"></div><div class="sh-head"><h3>${ti
 // swipe down to dismiss (from the header, or from the content when it's scrolled to the top)
 (function(){let y0=null,dy=0,t0=0;
   sheetEl.addEventListener('touchstart',e=>{const b=sheetEl.querySelector('.sh-body'),inHead=!e.target.closest('.sh-body');
-    if(!inHead&&(b.scrollTop>0||e.target.closest('input')))return void(y0=null);
+    if(!inHead&&(b.scrollTop>0||e.target.closest('input,.nodrag')))return void(y0=null);
     y0=e.touches[0].clientY;dy=0;t0=Date.now()},{passive:true});
   sheetEl.addEventListener('touchmove',e=>{if(y0==null)return;dy=e.touches[0].clientY-y0;if(dy>0){if(e.cancelable)e.preventDefault();sheetEl.style.transition='none';sheetEl.style.transform='translateY('+dy+'px)'}},{passive:false});
   const end=()=>{if(y0==null)return;sheetEl.style.transition='';sheetEl.style.transform='';const fast=dy/Math.max(1,Date.now()-t0)>0.5;if(dy>120||(fast&&dy>40))back();y0=null};
@@ -668,10 +687,12 @@ function sheetGoals(){
   <div class="hint">New goals apply from today on; past days keep the goals they had.</div>
   <div style="height:14px"></div><button class="primary" data-act="saveGoals">Save goals</button>
   <h4 class="seth">App colours</h4>
-  <div class="swatches" role="radiogroup" aria-label="Colour">${BANDS.map(([b,l,c])=>`<button class="sw" role="radio" aria-checked="${TH.band===b}" aria-label="${l}" data-act="band" data-b="${b}" style="background:${c}"></button>`).join('')}</div>
+  <div class="swatches" role="radiogroup" aria-label="Colour">${BANDS.map(([b,l,c])=>`<button class="sw" role="radio" aria-checked="${TH.band===b}" aria-label="${l}" data-act="band" data-b="${b}" style="background:${c}"></button>`).join('')}<button class="sw swc" role="radio" aria-checked="${TH.band==='custom'}" aria-label="Any colour" data-act="band" data-b="custom"></button></div>
+  <div id="cwp"></div>
   <div class="chips" role="radiogroup" aria-label="Light or dark">${[['light','Light'],['dark','Dark'],['auto','Match phone']].map(([m,l])=>`<button class="chip ${TH.mode===m?'on':''}" role="radio" aria-checked="${TH.mode===m}" data-act="mode" data-m="${m}">${l}</button>`).join('')}</div>
   ${v.sheetUrl?`<a class="secondary" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener">Open the sheet (export from there)</a>`:''}
   <div class="hint" style="text-align:center;margin-top:14px">Food Log v${APP_VERSION}</div></div>`;
+  if(TH.band==='custom')wheel($('#cwp'));
   // calories move by what each macro change is worth, so a goal set by hand keeps its offset
   const num=k=>{const s=$('#g_'+k).value.trim().replace(',','.');return s===''?NaN:Number(s)};
   const KC={protein:4,net:4,fat:9},last={};
@@ -691,19 +712,52 @@ function saveGoals(){
 // ---------- colour theme (stored on this phone only) ----------
 const BANDS=[['ink','Ink','#17181F'],['blue','Blue','#2457F5'],['teal','Teal','#0B7F6F'],['violet','Violet','#6D4AFF'],['orange','Orange','#E2581A']];
 let TH=Object.assign({band:'ink',mode:'light'},ls.get('fl_theme',{}));
-if(!BANDS.some(b=>b[0]===TH.band))TH.band='ink';
+const okHex=h=>/^#[0-9a-f]{6}$/i.test(h||'');
+if(!(BANDS.some(b=>b[0]===TH.band)||(TH.band==='custom'&&okHex(TH.custom))))TH.band='ink';
 if(!['light','dark','auto'].includes(TH.mode))TH.mode='light';
 const darkQ=matchMedia('(prefers-color-scheme: dark)');
 function applyTheme(){
   const d=document.documentElement;d.dataset.band=TH.band;d.dataset.mode=TH.mode==='auto'?(darkQ.matches?'dark':'light'):TH.mode;
+  const v=TH.band==='custom'?flVars(TH.custom,d.dataset.mode==='dark'):{};
+  ['--band','--onband','--bandbtn','--acc','--onacc'].forEach(k=>v[k]?d.style.setProperty(k,v[k]):d.style.removeProperty(k));
   const m=document.querySelector('meta[name=theme-color]');if(m)m.content=getComputedStyle(d).getPropertyValue('--band').trim()||'#17181F'; // phone status bar matches the header
 }
 function setTheme(ch){
+  if(ch.band==='custom'&&!okHex(TH.custom)&&!ch.custom)ch.custom=(BANDS.find(b=>b[0]===TH.band)||BANDS[1])[2]; // start the wheel on the colour you had
   Object.assign(TH,ch);ls.set('fl_theme',TH);applyTheme();
   sheetEl.querySelectorAll('.sw').forEach(b=>b.setAttribute('aria-checked',b.dataset.b===TH.band));
+  const w=$('#cwp');if(w){if(TH.band==='custom'){if(!w.childElementCount)wheel(w)}else w.innerHTML=''}
   sheetEl.querySelectorAll('[data-act=mode]').forEach(b=>{const on=b.dataset.m===TH.mode;b.classList.toggle('on',on);b.setAttribute('aria-checked',on)});
 }
 darkQ.addEventListener&&darkQ.addEventListener('change',()=>{if(TH.mode==='auto')applyTheme()});
+// ----- colour wheel: round = which colour and how strong, slider = how dark -----
+const hsv2hex=(h,s,v)=>{const f=n=>{const k=(n+h/60)%6;return v-v*s*Math.max(0,Math.min(k,4-k,1))};return '#'+[f(5),f(3),f(1)].map(x=>Math.round(x*255).toString(16).padStart(2,'0')).join('').toUpperCase()};
+function hex2hsv(hex){const n=parseInt(hex.slice(1),16),r=(n>>16&255)/255,g=(n>>8&255)/255,b=(n&255)/255,mx=Math.max(r,g,b),d=mx-Math.min(r,g,b);
+  let h=0;if(d){h=mx===r?((g-b)/d)%6:mx===g?(b-r)/d+2:(r-g)/d+4;h*=60;if(h<0)h+=360}return{h,s:mx?d/mx:0,v:mx}}
+function wheel(box){
+  const c=hex2hsv(TH.custom);
+  box.innerHTML=`<div class="cw nodrag" id="cw" role="slider" aria-label="Colour wheel" tabindex="0"><div class="cwd" id="cwd"></div><i class="knob" id="knob"></i></div>
+  <div class="crow nodrag"><input type="range" id="cv" min="15" max="100" aria-label="How dark"><span class="chex" id="chex"></span></div>`;
+  const cw=$('#cw'),cv=$('#cv');cv.value=Math.round(c.v*100);
+  let raf=0;
+  const show=save=>{
+    const R=cw.clientWidth/2,a=c.h*Math.PI/180;
+    $('#knob').style.transform=`translate(${(R+Math.sin(a)*c.s*R).toFixed(1)}px,${(R-Math.cos(a)*c.s*R).toFixed(1)}px)`;
+    $('#cwd').style.opacity=(1-c.v).toFixed(2);
+    const hex=hsv2hex(c.h,c.s,c.v);$('#knob').style.background=hex;$('#chex').textContent=hex;
+    cv.style.background=`linear-gradient(to right,#000,${hsv2hex(c.h,c.s,1)})`;cw.setAttribute('aria-valuetext',hex);
+    if(save){cancelAnimationFrame(raf);raf=requestAnimationFrame(()=>setTheme({band:'custom',custom:hex}))}
+  };
+  const at=e=>{const r=cw.getBoundingClientRect(),R=r.width/2,dx=e.clientX-r.left-R,dy=e.clientY-r.top-R;
+    c.h=(Math.atan2(dx,-dy)*180/Math.PI+360)%360;c.s=Math.min(1,Math.hypot(dx,dy)/R);if(c.v<.15)c.v=.6,cv.value=60;show(true)};
+  let down=false;
+  cw.addEventListener('pointerdown',e=>{down=true;cw.setPointerCapture(e.pointerId);at(e)});
+  cw.addEventListener('pointermove',e=>{if(down)at(e)});
+  ['pointerup','pointercancel'].forEach(t=>cw.addEventListener(t,()=>down=false));
+  cw.addEventListener('keydown',e=>{const k={ArrowLeft:-10,ArrowRight:10}[e.key];if(k){e.preventDefault();c.h=(c.h+k+360)%360;if(c.s<.2)c.s=.8;show(true)}});
+  cv.addEventListener('input',()=>{c.v=cv.value/100;show(true)});
+  show(false);
+}
 applyTheme();
 
 // ---------- every tap goes through here ----------
