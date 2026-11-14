@@ -28,7 +28,29 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .iconbtn{width:44px;height:44px;border-radius:12px;background:var(--card);display:grid;place-items:center;font-size:18px;color:var(--dim);flex:none}
 .iconbtn:disabled{opacity:.35}
 .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
-.rings{display:flex;gap:4px;padding:14px 6px}
+.mac{padding:0;overflow:hidden}
+.pages{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.pages::-webkit-scrollbar{display:none}
+.pg{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
+.rings{display:flex;gap:4px;padding:14px 6px 6px}
+.dots{display:flex;justify-content:center;gap:6px;padding:4px 0 10px}
+.dots i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:width .2s,background .2s}
+.dots i.on{width:16px;background:var(--dim)}
+.split{display:flex;align-items:center;gap:16px;padding:12px 16px 4px}
+.donut{position:relative;width:104px;height:104px;flex:none}
+.donut svg{width:100%;height:100%}
+.donut div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.donut b{font-size:20px;font-weight:700;line-height:1.1}
+.donut small{font-size:11px;color:var(--dim)}
+.splits{flex:1;min-width:0}
+.sp,.sph{display:grid;grid-template-columns:10px 1fr 46px 46px;align-items:center;gap:8px;width:100%;text-align:left}
+.sp{padding:6px 0;border-top:1px solid var(--line)}
+.sph{font-size:11px;color:var(--faint);padding-bottom:4px}
+.sph span,.sp b,.sp em{text-align:right}
+.sp i{width:10px;height:10px;border-radius:5px}
+.sp span{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sp b{font-size:16px;font-weight:700}
+.sp em{font-style:normal;font-size:13px;color:var(--dim)}
 .ring{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:12px;padding:2px 0}
 .dial{position:relative;width:76px;height:76px;margin-bottom:6px}
 .dial b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:700}
@@ -88,7 +110,7 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .qty{display:flex;align-items:center;gap:8px;margin:12px 0}
 .qty input{flex:1;font-size:28px;font-weight:600;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;min-width:0}
 .qty span{color:var(--dim);font-size:16px;min-width:40px}
-.step{width:48px;height:56px;border-radius:12px;background:var(--card);font-size:22px;color:var(--dim);flex:none}
+.step{touch-action:none;width:48px;height:56px;border-radius:12px;background:var(--card);font-size:22px;color:var(--dim);flex:none}
 .macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 14px}
 .macros div{background:var(--card);border-radius:12px;padding:8px;text-align:center}
 .macros b{display:block;font-size:17px}
@@ -116,7 +138,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='8';
+const APP_VERSION='9';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -147,7 +169,7 @@ function mealNow(){const h=new Date().getHours()+new Date().getMinutes()/60;retu
 
 // ---------- state ----------
 // S.follow: the screen is on "today" and should roll over to the new day at midnight
-const S={date:today(),follow:true,data:null,loading:false,error:null,seq:0,badKey:false,update:false};
+const S={date:today(),follow:true,data:null,loading:false,error:null,seq:0,badKey:false,update:false,page:0};
 let Q=ls.get('fl_queue',[]);            // changes not yet confirmed by the sheet
 const saveQ=()=>ls.set('fl_queue',Q);
 let IDMAP=Q.length?ls.get('fl_idmap',{}):{}; // temp id of a just-created food -> its real id
@@ -303,14 +325,14 @@ function render(){
   const d=v||{goals:{},entries:[]},g=d.goals||{},t=totals(d.entries),unloaded=ready&&S.data.partial&&!S.loading;
   let h=`<header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1>${isToday?'Today':nice(S.date)}<span class="sub">${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></h1><button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Goals and settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
   h+=banners();
-  h+='<div class="card rings">';
+  h+='<div class="card mac"><div class="pages" id="pages"><div class="pg rings" aria-label="Goals">';
   for(const [k,label,u,col,cap] of MACROS){
     const goal=g[k]||0,val=t[k],frac=goal?Math.min(1,val/goal):0,over=goal&&val>goal+0.05,un=k==='kcal'?'':' g';
     const sub=!ready?'&nbsp;':!goal?'No goal':over?fmt(val-goal)+un+' over':fmt(goal-val)+un+' left';
     const arc=frac>0?`<circle cx="38" cy="38" r="31" fill="none" stroke="${over&&cap?'var(--bad)':col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(RING*frac).toFixed(1)} ${RING.toFixed(1)}" transform="rotate(-90 38 38)"/>`:'';
     h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--card2)" stroke-width="7"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></button>`;
   }
-  h+='</div>';
+  h+='</div>'+splitPage(ready,t,g)+`</div><div class="dots" aria-hidden="true"><i class="${S.page?'':'on'}"></i><i class="${S.page?'on':''}"></i></div></div>`;
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
     const tot=es.length?r0(mt.kcal)+' kcal · '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
@@ -319,6 +341,23 @@ function render(){
     h+='</div>';
   }
   app.innerHTML=h;
+  const pg=$('#pages');
+  if(S.page)pg.scrollLeft=S.page*pg.clientWidth;
+  pg.addEventListener('scroll',()=>{const n=Math.round(pg.scrollLeft/(pg.clientWidth||1));if(n!==S.page){S.page=n;app.querySelectorAll('.dots i').forEach((d,i)=>d.classList.toggle('on',i===n))}},{passive:true});
+}
+// second page of the top card: where today's calories came from (fat / protein / net carbs), against the goal split
+const SPLIT=[['fat','Fat',9,'var(--fat)'],['protein','Protein',4,'var(--pro)'],['net','Net carbs',4,'var(--net)']];
+function splitPage(ready,t,g){
+  const kc=SPLIT.map(([k,,f])=>t[k]*f),sum=kc.reduce((a,b)=>a+b,0);
+  const gk=SPLIT.map(([k,,f])=>(g[k]||0)*f),gsum=gk.reduce((a,b)=>a+b,0);
+  const R=46,C=2*Math.PI*R;let off=0,arcs='';
+  if(sum>0)SPLIT.forEach(([,, ,col],i)=>{const len=kc[i]/sum*C;if(len>0.5)arcs+=`<circle cx="56" cy="56" r="${R}" fill="none" stroke="${col}" stroke-width="12" stroke-dasharray="${Math.max(0,len-1.5).toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 56 56)"/>`;off+=len});
+  const pct=(v,s)=>s>0?r0(v/s*100):0;
+  let h=`<div class="pg split" aria-label="Calorie split"><div class="donut"><svg viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r="${R}" fill="none" stroke="var(--card2)" stroke-width="12"/>${arcs}</svg><div><b>${ready?fmt(t.kcal):'–'}</b><small>kcal</small></div></div><div class="splits"><div class="sph"><i></i><i></i><span>Now</span><span>Goal</span></div>`;
+  SPLIT.forEach(([k,label,,col],i)=>{
+    h+=`<button class="sp" data-act="ring" data-k="${k}" ${ready?'':'disabled'} aria-label="${label}: ${ready&&sum>0?pct(kc[i],sum):0}% of calories, goal ${gsum>0?pct(gk[i],gsum):0}%"><i style="background:${col}"></i><span>${label}</span><b>${ready&&sum>0?pct(kc[i],sum)+'%':'–'}</b><em>${gsum>0?pct(gk[i],gsum)+'%':'–'}</em></button>`;
+  });
+  return h+`${ready&&!sum?'<div class="hint">Log some food to see where your calories come from.</div>':''}</div></div>`;
 }
 const goToday=()=>{S.date=today();S.follow=true;load()};
 function go(n){const d=shift(S.date,n);if(d>today())return;S.date=d;S.follow=d===today();load()}
@@ -409,10 +448,10 @@ function amParts(){const v=view(),e=AM.eid?v.entries.find(x=>x.id===AM.eid):null
 function sheetAmount(){
   const {e,f}=amParts();
   if(!e&&!f){sheetEl.innerHTML=head('Not found')+'<div class="sh-body"><div class="empty">That item is no longer there.</div></div>';return}
-  const unit=e?e.unit:f.label,step=unit==='g'||unit==='ml'?5:1;
+  const unit=e?e.unit:f.label;
   sheetEl.innerHTML=head(esc(e?e.food:f.name))+`<div class="sh-body">
   ${f?`<div class="hint">${perText(f)}: ${r0(f.kcal)} kcal · fat ${fmt(f.fat)} · protein ${fmt(f.protein)} · net ${fmt(f.net)} g</div>`:''}
-  <div class="qty"><button class="step" aria-label="Less" data-act="bump" data-n="-${step}">−</button><input id="qty" type="number" inputmode="decimal" step="any" min="0" enterkeyhint="done" aria-label="Amount" value="${AM.qty}"><span>${esc(unit)}</span><button class="step" aria-label="More" data-act="bump" data-n="${step}">+</button></div>
+  <div class="qty"><button class="step" aria-label="1 ${esc(unit)} less" data-n="-1">−</button><input id="qty" type="number" inputmode="decimal" step="any" min="0" enterkeyhint="done" aria-label="Amount" value="${AM.qty}"><span>${esc(unit)}</span><button class="step" aria-label="1 ${esc(unit)} more" data-n="1">+</button></div>
   <div class="macros" id="amm"></div>
   <div class="chips four">${MEALS.map(([m,l])=>`<button class="chip ${m===AM.meal?'on':''}" data-act="meal" data-m="${m}">${l}</button>`).join('')}</div>
   <button class="primary" id="amgo" data-act="amSave">${e?'Save':'Add'}</button>
@@ -422,6 +461,7 @@ function sheetAmount(){
   const q=$('#qty');
   q.addEventListener('input',()=>{AM.qty=parseFloat(q.value)||0;amMacros()});
   q.addEventListener('keydown',ev=>{if(ev.key==='Enter'){ev.preventDefault();amSave()}});
+  sheetEl.querySelectorAll('.step').forEach(holdStep);
   amMacros();
   if(AM.fresh){AM.fresh=false;q.focus();q.select()}
 }
@@ -434,6 +474,16 @@ function amMacros(){
   $('#amgo').disabled=!(AM.qty>0);
 }
 function bump(n){AM.qty=Math.max(0,r2((AM.qty||0)+n));$('#qty').value=AM.qty;amMacros()}
+// tap = 1 unit; hold = keeps going, faster the longer it's held
+function holdStep(b){
+  const n=Number(b.dataset.n);let t=null,count=0;
+  const stop=()=>{clearTimeout(t);t=null};
+  const loop=()=>{bump(n);count++;t=setTimeout(loop,count<8?110:count<30?55:25)};
+  b.addEventListener('pointerdown',ev=>{if(ev.button)return;ev.preventDefault();stop();count=0;bump(n);if(navigator.vibrate)try{navigator.vibrate(5)}catch(e){};t=setTimeout(loop,420)});
+  ['pointerup','pointercancel','pointerleave'].forEach(x=>b.addEventListener(x,stop));
+  b.addEventListener('contextmenu',ev=>ev.preventDefault());
+  b.addEventListener('click',ev=>{if(ev.detail===0)bump(n)}); // keyboard Enter/Space
+}
 function amSave(){
   if(!(AM.qty>0))return;
   const {e,f}=amParts();
@@ -556,7 +606,7 @@ const ACT={
   day:d=>go(Number(d.n)),today:goToday,goals:()=>nav(sheetGoals),add:d=>openAdd(d.meal),entry:d=>openEntry(d.id),
   ring:d=>{RG={k:d.k};nav(sheetRing)},ringK:d=>{RG.k=d.k;sheetRing()},
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
-  bump:d=>bump(Number(d.n)),meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
+meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
   ffUnit:d=>ffUnit(d.u),ffSave,saveGoals,
   retryHeld,discardHeld,sendNow:()=>flush(true),reloadData:()=>load(),reload:()=>location.reload(),
