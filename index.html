@@ -99,12 +99,6 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .danger{color:var(--bad)}
 .link{color:var(--acc);font-weight:600;padding:10px 0}
 .links{display:flex;gap:20px;justify-content:center;margin-top:6px}
-.camb{width:44px;height:44px;border-radius:12px;background:var(--card2);color:var(--acc);display:grid;place-items:center;flex:none}
-.scanbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:13px;border-radius:14px;background:#0E2530;color:var(--acc);font-weight:700;margin-top:4px}
-.scanbox{border-radius:12px;padding:10px 12px;margin-top:10px;font-size:13px;background:var(--card);color:var(--dim)}
-.scanbox.ok{background:#0E2530;color:#BFF6FF}.scanbox.bad{background:#2A1216;color:var(--bad)}
-.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:8px}
-@keyframes sp{to{transform:rotate(360deg)}}
 .form label{display:block;font-size:13px;color:var(--dim);margin:12px 0 5px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .hint{font-size:12px;color:var(--faint);margin-top:4px}
@@ -121,9 +115,8 @@ input[type=number]{-moz-appearance:textfield}
 <div class="wrap" id="app"></div>
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
-<input type="file" id="cam" accept="image/*" capture="environment" hidden>
 <script>
-const APP_VERSION='7';
+const APP_VERSION='8';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -131,7 +124,7 @@ const MACROS=[['kcal','Calories','kcal','var(--kcal)',false],['net','Net carbs',
 const MKEYS=['kcal','fat','protein','net'];
 const $=s=>document.querySelector(s);
 const svg=(d,n)=>`<svg aria-hidden="true" width="${n||20}" height="${n||20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
-const IC={cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),left:svg('<path d="M15 6l-6 6 6 6"/>'),right:svg('<path d="M9 6l6 6-6 6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>',18),plus:svg('<path d="M12 5v14M5 12h14"/>'),
+const IC={left:svg('<path d="M15 6l-6 6 6 6"/>'),right:svg('<path d="M9 6l6 6-6 6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>',18),plus:svg('<path d="M12 5v14M5 12h14"/>'),
   gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>')};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const r1=n=>Math.round(n*10)/10, r2=n=>Math.round(n*100)/100, r0=n=>Math.round(n);
@@ -361,7 +354,7 @@ const usualQty=f=>f.defQty||(f.unit==='serving'?1:100);
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); // so "espanola" finds "Española"
 function openAdd(meal){AD={meal:meal||mealNow(),q:'',added:[]};nav(sheetAdd)}
 function sheetAdd(){
-  sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${mealName(AD.meal)}${S.date===today()?'':' · '+nice(S.date)}</h3><button class="camb" aria-label="Scan a nutrition label" data-act="scan">${IC.cam}</button><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><input class="search" id="q" placeholder="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"><div id="added"></div><div id="flist"></div></div>`;
+  sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${mealName(AD.meal)}${S.date===today()?'':' · '+nice(S.date)}</h3><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><input class="search" id="q" placeholder="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"><div id="added"></div><div id="flist"></div></div>`;
   $('#q').addEventListener('input',e=>{AD.q=e.target.value;listFoods()});
   listFoods();
 }
@@ -475,13 +468,12 @@ function amDelete(){
 
 // ----- food form -----
 let FF={id:null,unit:'g'};
-function openFoodForm(id,name){FF={id:id||null,name:name||'',unit:null,pre:null,scan:null};nav(sheetFood)}
+function openFoodForm(id,name){FF={id:id||null,name:name||'',unit:null};nav(sheetFood)}
 function sheetFood(){
   const f=FF.id?view().foods.find(x=>x.id===realId(FF.id)):null;
-  const x=f||Object.assign({name:FF.name,unit:'g',label:'serving',kcal:'',fat:'',protein:'',net:'',defQty:''},FF.pre||{});
+  const x=f||{name:FF.name,unit:'g',label:'serving',kcal:'',fat:'',protein:'',net:'',defQty:''};
   FF.unit=x.unit;
   sheetEl.innerHTML=head(f?'Edit food':'New food')+`<div class="sh-body form">
-  ${f?'':`<button class="scanbtn" data-act="scan" ${FF.scan==='busy'?'disabled':''}>${FF.scan==='busy'?'<span class="spin"></span>Reading the label…':IC.cam+(FF.pre?'Scan again':'Scan a nutrition label')}</button>${scanBox()}`}
   <label for="ff_name">Name</label><input class="inp" id="ff_name" value="${esc(x.name)}" placeholder="e.g. Tesco smoked mackerel" autocomplete="off" enterkeyhint="next">
   <label>Values are per</label><div class="chips" style="margin:0">${[['g','100 g'],['ml','100 ml'],['serving','1 serving']].map(([u,l])=>`<button class="chip ${x.unit===u?'on':''}" data-act="ffUnit" data-u="${u}">${l}</button>`).join('')}</div>
   <div id="ff_lab" style="display:${x.unit==='serving'?'block':'none'}"><label for="ff_label">Serving name</label><input class="inp" id="ff_label" value="${esc(x.unit==='serving'?x.label:'serving')}" placeholder="e.g. egg, bar, burger" autocomplete="off"></div>
@@ -495,44 +487,8 @@ function sheetFood(){
   const chk=()=>{const n=k=>Number($('#ff_'+k).value.trim().replace(',','.')),kc=n('kcal'),est=4*n('protein')+4*n('net')+9*n('fat');
     $('#ff_chk').textContent=kc>0&&est>0&&Math.abs(kc-est)>Math.max(40,est*0.25)?`Check the numbers: that fat, protein and carbs come to about ${r0(est)} kcal.`:''};
   ['kcal','net','protein','fat'].forEach(k=>$('#ff_'+k).addEventListener('input',chk));chk();
-  if(!f&&!FF.pre&&FF.scan!=='busy')$(x.name?'#ff_kcal':'#ff_name').focus();
-  if(FF.pre&&!x.name)$('#ff_name').focus();
+  if(!f)$(x.name?'#ff_kcal':'#ff_name').focus();
 }
-// ----- label scanner: photo -> Gemini (through the sheet's script) -> filled-in form; nothing saves until you tap Save -----
-function scanBox(){
-  const sc=FF.scan;
-  if(!sc||sc==='busy')return '';
-  if(sc.err)return `<div class="scanbox bad">${esc(sc.err)}</div>`;
-  if(!sc.found)return `<div class="scanbox bad">Couldn't read a nutrition table${sc.notes?' ('+esc(sc.notes)+')':''}. Try again flat, close up, in good light.</div>`;
-  return `<div class="scanbox ok">Filled in from the label: check it against the packet before saving.${sc.usLabel?' US label: net carbs = total carbs minus fibre.':''}${sc.notes?' '+esc(sc.notes):''}</div>`;
-}
-function startScan(){
-  if(!navigator.onLine)return toast('Scanning needs signal');
-  const cam=$('#cam');cam.value='';cam.click();
-}
-async function shrink(file){ // phone photos are huge: 1600 px on the long side is plenty to read a label
-  const bmp=await createImageBitmap(file),k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
-  const c=document.createElement('canvas');c.width=Math.round(bmp.width*k);c.height=Math.round(bmp.height*k);
-  c.getContext('2d').drawImage(bmp,0,0,c.width,c.height);
-  return c.toDataURL('image/jpeg',0.85).split(',')[1];
-}
-$('#cam').addEventListener('change',async e=>{
-  const file=e.target.files&&e.target.files[0];if(!file)return;
-  if(STACK[STACK.length-1]!==sheetFood){FF={id:null,name:'',unit:null,pre:null,scan:null};nav(sheetFood)}
-  const keep=$('#ff_name')?$('#ff_name').value.trim():'';
-  FF.scan='busy';sheetFood();
-  let res,err;
-  try{res=await api({action:'scanLabel',image:await shrink(file),mime:'image/jpeg'},60000)}catch(x){err=x}
-  if(STACK[STACK.length-1]!==sheetFood)return; // left the form while it was reading
-  if(err){FF.scan={err:err.kind==='offline'?'No signal, or the scan took too long. Try again.':err.message};sheetFood();return}
-  const sc=res.scan;FF.scan=sc;
-  if(sc.found){
-    let name=keep||sc.name||'';
-    if(!keep&&name&&sc.brand&&!norm(name).includes(norm(sc.brand).slice(0,5)))name+=' ('+sc.brand+')';
-    FF.pre={name,unit:sc.unit,label:sc.label,kcal:sc.kcal,fat:sc.fat,protein:sc.protein,net:sc.net,defQty:sc.defQty};
-  }else if(keep)FF.name=keep;
-  sheetFood();
-});
 function ffUnit(u){FF.unit=u;sheetEl.querySelectorAll('[data-u]').forEach(c=>c.classList.toggle('on',c.dataset.u===u));$('#ff_lab').style.display=u==='serving'?'block':'none'}
 function ffSave(){
   const val=k=>{const s=$('#ff_'+k).value.trim().replace(',','.');return s===''?null:Number(s)};
@@ -574,10 +530,19 @@ function sheetGoals(){
   sheetEl.innerHTML=head('Goals')+`<div class="sh-body form">
   <div class="grid2"><div><label for="g_kcal">Calories (kcal)</label><input class="inp" id="g_kcal" inputmode="decimal" value="${g.kcal??''}"></div><div><label for="g_net">Net carbs (g)</label><input class="inp" id="g_net" inputmode="decimal" value="${g.net??''}"></div>
   <div><label for="g_protein">Protein (g)</label><input class="inp" id="g_protein" inputmode="decimal" value="${g.protein??''}"></div><div><label for="g_fat">Fat (g)</label><input class="inp" id="g_fat" inputmode="decimal" value="${g.fat??''}"></div></div>
+  <div class="hint">Changing protein, net carbs or fat updates calories for you (4 kcal per g of protein or carbs, 9 per g of fat). You can still type calories yourself.</div>
   <div class="hint">New goals apply from today on; past days keep the goals they had.</div>
   <div style="height:14px"></div><button class="primary" data-act="saveGoals">Save goals</button>
   ${v.sheetUrl?`<a class="secondary" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener">Open the sheet (export from there)</a>`:''}
   <div class="hint" style="text-align:center;margin-top:14px">Food Log v${APP_VERSION}</div></div>`;
+  // calories move by what each macro change is worth, so a goal set by hand keeps its offset
+  const num=k=>{const s=$('#g_'+k).value.trim().replace(',','.');return s===''?NaN:Number(s)};
+  const KC={protein:4,net:4,fat:9},last={};
+  Object.keys(KC).forEach(k=>{last[k]=num(k);$('#g_'+k).addEventListener('input',()=>{
+    const now=num(k),kc=num('kcal');
+    if(isFinite(now)&&isFinite(last[k])&&isFinite(kc))$('#g_kcal').value=String(Math.round(kc+(now-last[k])*KC[k]));
+    if(isFinite(now))last[k]=now;
+  })});
 }
 function saveGoals(){
   const n=k=>{const s=$('#g_'+k).value.trim().replace(',','.');return s===''?NaN:Number(s)};
@@ -593,7 +558,7 @@ const ACT={
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
   bump:d=>bump(Number(d.n)),meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
-  ffUnit:d=>ffUnit(d.u),ffSave,saveGoals,scan:startScan,
+  ffUnit:d=>ffUnit(d.u),ffSave,saveGoals,
   retryHeld,discardHeld,sendNow:()=>flush(true),reloadData:()=>load(),reload:()=>location.reload(),
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const fn=ACT[el.dataset.act];if(fn)fn(el.dataset,el)});
