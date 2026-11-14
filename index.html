@@ -29,28 +29,36 @@ header .sub{display:block;font-size:13px;color:var(--dim);font-weight:500;min-he
 .iconbtn:disabled{opacity:.35}
 .card{background:var(--card);border-radius:16px;padding:14px;margin-bottom:12px}
 .mac{padding:0;overflow:hidden}
-.pages{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
+.pages{display:flex;align-items:flex-start;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior-x:contain}
 .pages::-webkit-scrollbar{display:none}
 .pg{flex:0 0 100%;min-width:0;scroll-snap-align:start;scroll-snap-stop:always}
 .rings{display:flex;gap:4px;padding:14px 6px 6px}
 .dots{display:flex;justify-content:center;gap:6px;padding:4px 0 10px}
 .dots i{width:6px;height:6px;border-radius:3px;background:var(--line);transition:width .2s,background .2s}
 .dots i.on{width:16px;background:var(--dim)}
-.split{display:flex;align-items:center;gap:16px;padding:12px 16px 4px}
-.donut{position:relative;width:104px;height:104px;flex:none}
-.donut svg{width:100%;height:100%}
-.donut div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
-.donut b{font-size:20px;font-weight:700;line-height:1.1}
-.donut small{font-size:11px;color:var(--dim)}
-.splits{flex:1;min-width:0}
-.sp,.sph{display:grid;grid-template-columns:10px 1fr 46px 46px;align-items:center;gap:8px;width:100%;text-align:left}
-.sp{padding:6px 0;border-top:1px solid var(--line)}
-.sph{font-size:11px;color:var(--faint);padding-bottom:4px}
-.sph span,.sp b,.sp em{text-align:right}
-.sp i{width:10px;height:10px;border-radius:5px}
-.sp span{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sp b{font-size:16px;font-weight:700}
-.sp em{font-style:normal;font-size:13px;color:var(--dim)}
+.gc{padding:12px 12px 2px}
+.gcw{position:relative;width:168px;height:168px;margin:0 auto}
+.gcw svg{width:100%;height:100%}
+.gcc{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.gcc b{font-size:22px;font-weight:700;line-height:1.1}
+.gcc span{font-size:13px;color:var(--dim);font-weight:500}
+.gcc small{font-size:12px;color:var(--dim)}
+.leg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:8px}
+.lg{text-align:left;padding:6px 4px;border-radius:10px;min-width:0}
+.lg span{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;white-space:nowrap}
+.lg span i{width:8px;height:8px;border-radius:4px;flex:none}
+.lg div{font-size:13px;color:var(--dim);margin-top:2px;white-space:nowrap}
+.lg div b{color:var(--text);font-size:16px;font-weight:700}
+.lg small{display:block;font-size:12px;color:var(--faint);white-space:nowrap}
+.lg small.bad{color:var(--bad)}
+.mt4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;padding:8px 0 4px}
+.mt4 div{background:var(--card2);border-radius:12px;padding:10px 4px;text-align:center;min-width:0}
+.mt4 b{display:block;font-size:18px;font-weight:700}
+.mt4 small{display:block;font-size:11px;color:var(--dim)}
+.mt4 em{display:block;font-style:normal;font-size:11px;color:var(--faint);margin-top:4px}
+.mtl{font-size:12px;color:var(--faint);padding-top:8px}
+.meal .pg>.ent:first-child{border-top:0;margin-top:4px}
+.meal .dots{padding:6px 0 0}
 .ring{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:12px;padding:2px 0}
 .dial{position:relative;width:76px;height:76px;margin-bottom:6px}
 .dial b{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:700}
@@ -138,7 +146,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='9';
+const APP_VERSION='10';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -169,7 +177,7 @@ function mealNow(){const h=new Date().getHours()+new Date().getMinutes()/60;retu
 
 // ---------- state ----------
 // S.follow: the screen is on "today" and should roll over to the new day at midnight
-const S={date:today(),follow:true,data:null,loading:false,error:null,seq:0,badKey:false,update:false,page:0};
+const S={date:today(),follow:true,data:null,loading:false,error:null,seq:0,badKey:false,update:false,pg:{}};
 let Q=ls.get('fl_queue',[]);            // changes not yet confirmed by the sheet
 const saveQ=()=>ls.set('fl_queue',Q);
 let IDMAP=Q.length?ls.get('fl_idmap',{}):{}; // temp id of a just-created food -> its real id
@@ -325,39 +333,63 @@ function render(){
   const d=v||{goals:{},entries:[]},g=d.goals||{},t=totals(d.entries),unloaded=ready&&S.data.partial&&!S.loading;
   let h=`<header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1>${isToday?'Today':nice(S.date)}<span class="sub">${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></h1><button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Goals and settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
   h+=banners();
-  h+='<div class="card mac"><div class="pages" id="pages"><div class="pg rings" aria-label="Goals">';
+  h+='<div class="card mac"><div class="pages" data-sw="top"><div class="pg rings" aria-label="Goals">';
   for(const [k,label,u,col,cap] of MACROS){
     const goal=g[k]||0,val=t[k],frac=goal?Math.min(1,val/goal):0,over=goal&&val>goal+0.05,un=k==='kcal'?'':' g';
     const sub=!ready?'&nbsp;':!goal?'No goal':over?fmt(val-goal)+un+' over':fmt(goal-val)+un+' left';
     const arc=frac>0?`<circle cx="38" cy="38" r="31" fill="none" stroke="${over&&cap?'var(--bad)':col}" stroke-width="7" stroke-linecap="round" stroke-dasharray="${(RING*frac).toFixed(1)} ${RING.toFixed(1)}" transform="rotate(-90 38 38)"/>`:'';
     h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" stroke="var(--card2)" stroke-width="7"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></button>`;
   }
-  h+='</div>'+splitPage(ready,t,g)+`</div><div class="dots" aria-hidden="true"><i class="${S.page?'':'on'}"></i><i class="${S.page?'on':''}"></i></div></div>`;
+  h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
     const tot=es.length?r0(mt.kcal)+' kcal · '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
     h+=`<div class="card meal"><div class="mh"><h2>${label}</h2><span class="tot">${tot}</span><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>`;
-    for(const e of es)h+=`<button class="row ent ${e.pending?'pending':''}" data-act="entry" data-id="${esc(e.id)}"><div class="n"><div>${esc(e.food)}</div><small>${fmt(e.qty)} ${esc(e.unit)}</small></div><div class="m"><b>${r0(e.kcal)}</b> kcal<br>${fmt(e.net)} g net</div></button>`;
+    if(es.length){
+      // swipe the card: what's in it, then its macros, then the rings chart for this meal
+      h+=`<div class="pages" data-sw="m:${m}"><div class="pg" aria-label="${label} foods">`;
+      for(const e of es)h+=`<button class="row ent ${e.pending?'pending':''}" data-act="entry" data-id="${esc(e.id)}"><div class="n"><div>${esc(e.food)}</div><small>${fmt(e.qty)} ${esc(e.unit)}</small></div><div class="m"><b>${r0(e.kcal)}</b> kcal<br>${fmt(e.net)} g net</div></button>`;
+      h+=`</div><div class="pg" aria-label="${label} macros">${mealMacros(mt,g)}</div><div class="pg" aria-label="${label} chart">${chart(mt,g,true,true)}</div></div>${dots('m:'+m,3)}`;
+    }
     h+='</div>';
   }
   app.innerHTML=h;
-  const pg=$('#pages');
-  if(S.page)pg.scrollLeft=S.page*pg.clientWidth;
-  pg.addEventListener('scroll',()=>{const n=Math.round(pg.scrollLeft/(pg.clientWidth||1));if(n!==S.page){S.page=n;app.querySelectorAll('.dots i').forEach((d,i)=>d.classList.toggle('on',i===n))}},{passive:true});
+  swipers();
 }
-// second page of the top card: where today's calories came from (fat / protein / net carbs), against the goal split
-const SPLIT=[['fat','Fat',9,'var(--fat)'],['protein','Protein',4,'var(--pro)'],['net','Net carbs',4,'var(--net)']];
-function splitPage(ready,t,g){
-  const kc=SPLIT.map(([k,,f])=>t[k]*f),sum=kc.reduce((a,b)=>a+b,0);
-  const gk=SPLIT.map(([k,,f])=>(g[k]||0)*f),gsum=gk.reduce((a,b)=>a+b,0);
-  const R=46,C=2*Math.PI*R;let off=0,arcs='';
-  if(sum>0)SPLIT.forEach(([,, ,col],i)=>{const len=kc[i]/sum*C;if(len>0.5)arcs+=`<circle cx="56" cy="56" r="${R}" fill="none" stroke="${col}" stroke-width="12" stroke-dasharray="${Math.max(0,len-1.5).toFixed(1)} ${C.toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 56 56)"/>`;off+=len});
-  const pct=(v,s)=>s>0?r0(v/s*100):0;
-  let h=`<div class="pg split" aria-label="Calorie split"><div class="donut"><svg viewBox="0 0 112 112" aria-hidden="true"><circle cx="56" cy="56" r="${R}" fill="none" stroke="var(--card2)" stroke-width="12"/>${arcs}</svg><div><b>${ready?fmt(t.kcal):'–'}</b><small>kcal</small></div></div><div class="splits"><div class="sph"><i></i><i></i><span>Now</span><span>Goal</span></div>`;
-  SPLIT.forEach(([k,label,,col],i)=>{
-    h+=`<button class="sp" data-act="ring" data-k="${k}" ${ready?'':'disabled'} aria-label="${label}: ${ready&&sum>0?pct(kc[i],sum):0}% of calories, goal ${gsum>0?pct(gk[i],gsum):0}%"><i style="background:${col}"></i><span>${label}</span><b>${ready&&sum>0?pct(kc[i],sum)+'%':'–'}</b><em>${gsum>0?pct(gk[i],gsum)+'%':'–'}</em></button>`;
+// ----- swipeable cards: one swipe = one page; the card's height follows the page you're on -----
+const dots=(k,n)=>`<div class="dots" aria-hidden="true">${Array.from({length:n},(_,i)=>`<i class="${i===Math.min(S.pg[k]||0,n-1)?'on':''}"></i>`).join('')}</div>`;
+function swipers(){
+  $('#app').querySelectorAll('.pages').forEach(el=>{
+    const k=el.dataset.sw,pgs=[...el.children],n=pgs.length,ds=el.nextElementSibling.children;
+    const hAt=p=>{const a=Math.floor(p),b=Math.min(n-1,a+1),f=p-a;return pgs[a].offsetHeight*(1-f)+pgs[b].offsetHeight*f};
+    const i=Math.min(S.pg[k]||0,n-1);
+    el.style.height=hAt(i)+'px';if(i)el.scrollLeft=i*el.clientWidth;
+    el.addEventListener('scroll',()=>{
+      const p=Math.max(0,Math.min(n-1,el.scrollLeft/(el.clientWidth||1)));el.style.height=hAt(p)+'px';
+      const j=Math.round(p);if(j!==(S.pg[k]||0)){S.pg[k]=j;[...ds].forEach((d,x)=>d.classList.toggle('on',x===j))}
+    },{passive:true});
   });
-  return h+`${ready&&!sum?'<div class="hint">Log some food to see where your calories come from.</div>':''}</div></div>`;
+}
+// Carb Manager style chart: net carbs, protein and fat as rings against the day's goals, calories in the middle
+const CH=[['net','Net carbs',46,'var(--net)',true],['protein','Protein',62,'var(--pro)',false],['fat','Fat',78,'var(--fat)',false]];
+function chart(t,g,ready,meal){
+  let svg='';
+  for(const [k,,R,col,cap] of CH){
+    const C=2*Math.PI*R,goal=g[k]||0,f=goal?Math.min(1,t[k]/goal):0,over=goal&&t[k]>goal+0.05;
+    svg+=`<circle cx="84" cy="84" r="${R}" fill="none" stroke="var(--card2)" stroke-width="11"/>`;
+    if(ready&&f>0)svg+=`<circle cx="84" cy="84" r="${R}" fill="none" stroke="${over&&cap?'var(--bad)':col}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${(C*f).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 84 84)"/>`;
+  }
+  let h=`<div class="gc"><div class="gcw"><svg viewBox="0 0 168 168" aria-hidden="true">${svg}</svg><div class="gcc"><b>${ready?fmt(t.kcal):'–'}</b><span>/ ${g.kcal?fmt(g.kcal):'–'}</span><small>kcal${meal?' in this meal':''}</small></div></div><div class="leg">`;
+  for(const [k,label,,col,cap] of CH){
+    const goal=g[k]||0,over=goal&&t[k]>goal+0.05;
+    const sub=!ready||!goal?'&nbsp;':meal?r0(t[k]/goal*100)+'% of the day':over?fmt(t[k]-goal)+' g over':fmt(goal-t[k])+' g left';
+    h+=`<${meal?'div':'button data-act="ring" data-k="'+k+'"'} class="lg"><span><i style="background:${col}"></i>${label}</span><div><b>${ready?fmt(t[k]):'–'}</b> / ${goal?fmt(goal):'–'} g</div><small class="${over&&cap&&!meal?'bad':''}">${sub}</small></${meal?'div':'button'}>`;
+  }
+  return h+'</div></div>';
+}
+function mealMacros(t,g){
+  const cell=(k,label)=>`<div><b>${k==='kcal'?r0(t[k]):fmt(t[k])}</b><small>${label}</small><em>${g[k]?r0(t[k]/g[k]*100)+'% of day':'&nbsp;'}</em></div>`;
+  return `<div class="mt4">${cell('kcal','kcal')}${cell('net','net carbs')}${cell('protein','protein')}${cell('fat','fat')}</div>${t.fat+t.protein+t.net>0?`<div class="mtl">${r0(t.fat*9/(t.fat*9+t.protein*4+t.net*4)*100)}% of this meal's calories are from fat</div>`:''}`;
 }
 const goToday=()=>{S.date=today();S.follow=true;load()};
 function go(n){const d=shift(S.date,n);if(d>today())return;S.date=d;S.follow=d===today();load()}
@@ -384,6 +416,7 @@ const head=(title,extra)=>`<div class="grab"></div><div class="sh-head"><h3>${ti
   sheetEl.addEventListener('touchend',end);sheetEl.addEventListener('touchcancel',end);
 })();
 // if the browser doesn't shrink the page for the keyboard, lift the sheet above it ourselves
+let lastW=innerWidth;addEventListener('resize',()=>{if(innerWidth!==lastW){lastW=innerWidth;render()}}); // card heights depend on the width
 if(window.visualViewport){const vv=visualViewport,f=()=>{const kb=innerHeight-vv.height-vv.offsetTop;document.documentElement.style.setProperty('--kb',(kb>120?kb:0)+'px')};vv.addEventListener('resize',f);vv.addEventListener('scroll',f)}
 
 // ----- add: pick a food -----
