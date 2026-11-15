@@ -26,13 +26,13 @@ if(band==='custom'&&/^#[0-9a-f]{6}$/i.test(t.custom||'')){var v=flVars(t.custom,
 @font-face{font-family:Jakarta;src:url(jakarta.woff2) format('woff2');font-weight:200 800;font-display:swap}
 /* light (default) */
 :root{--bg:#F2F2F7;--card:#FFFFFF;--card2:#F0F0F5;--line:#ECECF1;--text:#111114;--dim:#6B6B75;--faint:#86868F;--bad:#E0243A;--warn:#9A5B00;
---kcal:#FF2D55;--net:#FF9500;--pro:#007AFF;--fat:#34C759;--tint:16%;
+--kcal:#AF52DE;--net:#FF9500;--pro:#007AFF;--fat:#34C759;--tint:16%;
 --band:#17181F;--onband:#FFFFFF;--bandbtn:rgba(255,255,255,.14);--acc:#111114;--onacc:#FFFFFF;--link:#0062D6;
 --shadow:0 1px 3px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05);--shadow2:0 6px 24px rgba(0,0,0,.10);--scrim:rgba(0,0,0,.35);
 --toastbg:#1C1C22;--toastfg:#FFFFFF;--toastacc:#8AB8FF;--bw:#FFF3DC;--be:#FFE6E9;--bi:#E8F0FF;--bitext:#1D4ED8;
 --m-breakfast:#FF9500;--m-lunch:#34C759;--m-dinner:#5856D6;--m-snack:#FF2D55;--kb:0px;color-scheme:light}
 [data-mode=dark]{--bg:#0D0E12;--card:#181A21;--card2:#23262F;--line:#262A33;--text:#F1F2F6;--dim:#A3A7B3;--faint:#80848F;--bad:#FF5C6C;--warn:#FFB547;
---kcal:#FF375F;--net:#FF9F0A;--pro:#0A84FF;--fat:#30D158;--tint:24%;
+--kcal:#BF5AF2;--net:#FF9F0A;--pro:#0A84FF;--fat:#30D158;--tint:24%;
 --band:#1E2029;--acc:#F1F2F6;--onacc:#111114;--link:#7FB2FF;--shadow:none;--shadow2:0 6px 24px rgba(0,0,0,.4);--scrim:rgba(0,0,0,.6);
 --toastbg:#F1F2F6;--toastfg:#111114;--toastacc:#0057C2;--bw:#2A2210;--be:#2A1216;--bi:#0E1A33;--bitext:#8DB4FF;
 --m-breakfast:#FF9F0A;--m-lunch:#30D158;--m-dinner:#5E5CE6;--m-snack:#FF375F;color-scheme:dark}
@@ -82,13 +82,6 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .lg span small{font-size:12px;font-weight:500;color:var(--faint)}
 .lg em{font-style:normal;font-size:12px;color:var(--faint);white-space:nowrap}
 .lg em.bad{color:var(--bad);font-weight:700}
-.mm4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:12px 2px 2px}
-.mm4 div{min-width:0}
-.mm4 b{display:block;font-size:19px;font-weight:700;line-height:1.1}
-.mm4 small{display:block;font-size:12px;color:var(--dim);white-space:nowrap}
-.mm4 i{display:block;height:4px;border-radius:2px;background:var(--card2);margin:8px 0 5px;overflow:hidden}
-.mm4 i u{display:block;height:100%;border-radius:2px}
-.mm4 em{display:block;font-style:normal;font-size:11px;color:var(--faint);white-space:nowrap}
 .meal .pg>.ent:first-child{border-top:0;margin-top:4px}
 .ring{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;border-radius:12px;padding:2px 0}
 .dial{position:relative;width:76px;height:76px;margin-bottom:6px}
@@ -115,6 +108,16 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .row .n div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row small{color:var(--faint);display:block}
 .ent{padding:10px 0;border-top:1px solid var(--line)}
+.meal .ent{display:flex;align-items:center;gap:6px;padding:4px 0}
+.meal .ent>.row{flex:1;min-width:0;padding:6px 0}
+.again{width:40px;height:40px;border-radius:20px;background:var(--card2);color:var(--dim);display:grid;place-items:center;flex:none;margin-right:-2px}
+.again svg{width:18px;height:18px}
+.times{display:inline-block;font-size:11px;font-weight:700;color:var(--text);background:var(--card2);border-radius:6px;padding:0 5px;margin-left:4px}
+.mtog{display:flex;align-items:center;gap:12px;flex:1;min-width:0;text-align:left;border-radius:12px}
+.mtog:disabled{opacity:1}
+.chev{color:var(--faint);display:grid;place-items:center;transition:transform .2s;margin-left:auto}
+.folded .chev{transform:rotate(-90deg)}
+.gsum{font-size:13px;color:var(--dim);margin-bottom:6px}
 .mh+.ent{border-top:0;margin-top:4px}
 .ent .m{text-align:right;font-size:13px;color:var(--dim);white-space:nowrap}
 .ent .m b{color:var(--text);font-weight:600}
@@ -192,7 +195,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='13';
+const APP_VERSION='14';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -201,7 +204,7 @@ const MKEYS=['kcal','fat','protein','net'];
 const $=s=>document.querySelector(s);
 const svg=(d,n)=>`<svg aria-hidden="true" width="${n||20}" height="${n||20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const IC={left:svg('<path d="M15 6l-6 6 6 6"/>'),right:svg('<path d="M9 6l6 6-6 6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>',18),plus:svg('<path d="M12 5v14M5 12h14"/>'),
-  gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>')};
+  gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),chev:svg('<path d="M6 9l6 6 6-6"/>',18)};
 const MI={breakfast:svg('<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 9V6M5.6 11.6 4.2 10.2M18.4 11.6l1.4-1.4"/>',22),
   lunch:svg('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',22),
   dinner:svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',22),
@@ -395,19 +398,50 @@ function render(){
   h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
-    const tot=es.length?r0(mt.kcal)+' kcal, '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
-    h+=`<div class="card meal"><div class="mh"><span class="mi" style="background:var(--m-${m})">${MI[m]}</span><h2>${label}<span class="tot">${tot}</span></h2><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>`;
+    const tot=es.length?kc(mt.kcal)+' kcal, '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
+    const folded=es.length&&FOLD[m];
+    h+=`<div class="card meal ${folded?'folded':''}"><div class="mh"><button class="mtog" data-act="fold" data-meal="${m}" ${es.length?`aria-expanded="${!folded}"`:'disabled'}><span class="mi" style="background:var(--m-${m})">${MI[m]}</span><h2>${label}<span class="tot">${tot}</span></h2>${es.length?`<span class="chev">${IC.chev}</span>`:''}</button><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>`;
     if(!es.length)delete S.pg['m:'+m];
-    if(es.length){
-      // swipe the card: what's in it, then the rings chart for this meal, then its macros
+    if(es.length&&!folded){
+      // swipe the card: what's in it, then the rings chart for this meal
       h+=`<div class="pages" data-sw="m:${m}"><div class="pg" aria-label="${label} foods">`;
-      for(const e of es)h+=`<button class="row ent ${e.pending?'pending':''}" data-act="entry" data-id="${esc(e.id)}"><div class="n"><div>${esc(e.food)}</div><small>${fmt(e.qty)} ${esc(e.unit)}</small></div><div class="m"><b>${r0(e.kcal)}</b> kcal<br>${fmt(e.net)} g net</div></button>`;
-      h+=`</div><div class="pg" aria-label="${label} chart">${chart(mt,g,true,true)}</div><div class="pg" aria-label="${label} macros">${mealMacros(mt,g)}</div></div>${dots('m:'+m,3)}`;
+      for(const gr of groups(es)){
+        const t=totals(gr.es),one=gr.es.length===1,e=gr.es[0],qty=gr.es.reduce((a,x)=>a+x.qty,0),f=foodOf(e.foodId);
+        h+=`<div class="ent ${gr.es.some(x=>x.pending)?'pending':''}"><button class="row" data-act="${one?'entry':'group'}" ${one?`data-id="${esc(e.id)}"`:`data-meal="${m}" data-fid="${esc(gr.key)}"`}><div class="n"><div>${esc(e.food)}</div><small>${fmt(qty)} ${esc(e.unit)}${one?'':` <span class="times">×${gr.es.length}</span>`}</small></div><div class="m"><b>${kc(t.kcal)}</b> kcal<br>${fmt(t.net)} g net</div></button>${f?`<button class="again" data-act="again" data-meal="${m}" data-fid="${esc(f.id)}" aria-label="Log ${fmt(usualQty(f))} ${esc(f.label)} more ${esc(f.name)}">${IC.plus}</button>`:'<span class="again"></span>'}</div>`;
+      }
+      h+=`</div><div class="pg" aria-label="${label} chart">${chart(mt,g,true,true)}</div></div>${dots('m:'+m,2)}`;
     }
     h+='</div>';
   }
   app.innerHTML=h;
   swipers();
+}
+// the same food logged more than once in a meal shows as one row with its total (the sheet still has a row per portion)
+function groups(es){const by=new Map();for(const e of es){const k=e.foodId||('n:'+e.food);if(!by.has(k))by.set(k,{key:k,es:[]});by.get(k).es.push(e)}return [...by.values()]}
+const foodOf=id=>{const r=realId(id);return view().foods.find(f=>f.id===r)};
+const kc=n=>r0(n).toLocaleString('en-GB');
+const FOLD=ls.get('fl_fold',{});
+function fold(m){FOLD[m]=!FOLD[m];ls.set('fl_fold',FOLD);render()}
+// one tap on a row's +: the usual amount of that food again, same meal
+let lastAgain=[null,0];
+function again(d){
+  const k=d.meal+d.fid;if(lastAgain[0]===k&&Date.now()-lastAgain[1]<600)return; // a double tap shouldn't log it twice
+  lastAgain=[k,Date.now()];
+  const f=foodOf(d.fid);if(!f)return;const q=usualQty(f),cid=newCid();
+  submit({action:'add',cid,date:S.date,meal:d.meal,foodId:f.id,qty:q});
+  if(navigator.vibrate)try{navigator.vibrate(8)}catch(e){}
+  toast('Added '+fmt(q)+' '+f.label+' · '+cut(f.name,20),'Undo',()=>undoAdd(cid));
+  if(STACK[STACK.length-1]===sheetGroup)sheetGroup();
+}
+// every portion of one food in one meal
+let GP=null;
+function sheetGroup(){
+  const es=view().entries.filter(e=>e.meal===GP.meal&&(e.foodId||('n:'+e.food))===GP.fid);
+  if(!es.length){sheetEl.innerHTML=head('Nothing left')+'<div class="sh-body"><div class="empty">Those portions have all been removed.</div></div>';return}
+  const t=totals(es),qty=es.reduce((a,x)=>a+x.qty,0),f=foodOf(es[0].foodId);
+  sheetEl.innerHTML=head(esc(es[0].food))+`<div class="sh-body"><div class="gsum">${fmt(qty)} ${esc(es[0].unit)} at ${mealName(GP.meal)} in ${es.length} portions · ${kc(t.kcal)} kcal · ${fmt(t.net)} g net</div>
+  ${es.map(e=>`<button class="row ent ${e.pending?'pending':''}" data-act="entry" data-id="${esc(e.id)}"><div class="n"><div>${fmt(e.qty)} ${esc(e.unit)}</div><small>${e.at?esc(String(e.at).slice(11,16)):'Not sent yet'}</small></div><div class="m"><b>${kc(e.kcal)}</b> kcal<br>${fmt(e.net)} g net</div></button>`).join('')}
+  ${f?`<div style="height:14px"></div><button class="primary" data-act="again" data-meal="${GP.meal}" data-fid="${esc(f.id)}">Log ${fmt(usualQty(f))} ${esc(f.label)} more</button>`:''}</div>`;
 }
 // ----- swipeable cards: one swipe = one page; the card's height follows the page you're on -----
 const dots=(k,n)=>`<div class="dots" aria-hidden="true">${Array.from({length:n},(_,i)=>`<i class="${i===Math.min(S.pg[k]||0,n-1)?'on':''}"></i>`).join('')}</div>`;
@@ -454,11 +488,6 @@ function chart(t,g,ready,meal){
     h+=`<${tag} class="lg" ${meal?'':`data-act="ring" data-k="${k}"`}><i style="background:${col}"></i><span>${label}<b>${ready?fmt(t[k]):'–'}<small>${meal?' g':' / '+(goal?fmt(goal):'–')+' g'}</small></b></span><em class="${over&&cap&&!meal?'bad':''}">${side}</em></${tag}>`;
   }
   return h+'</div></div>';
-}
-// a meal's own macros, each with how much of the day's goal it used
-function mealMacros(t,g){
-  const cell=(k,label,col)=>{const p=g[k]?t[k]/g[k]*100:0;return `<div><b>${k==='kcal'?r0(t[k]):fmt(t[k])}</b><small>${label}</small><i><u style="width:${Math.min(100,p).toFixed(0)}%;background:${col}"></u></i><em>${g[k]?r0(p)+'% of day':''}</em></div>`};
-  return `<div class="mm4">${cell('kcal','kcal','var(--kcal)')}${cell('net','net carbs','var(--net)')}${cell('protein','protein','var(--pro)')}${cell('fat','fat','var(--fat)')}</div>`;
 }
 const goToday=()=>{if(S.date!==today())resetMealPages();S.date=today();S.follow=true;load()};
 function go(n){const d=shift(S.date,n);if(d>today())return;S.date=d;S.follow=d===today();resetMealPages();load()}
@@ -763,7 +792,7 @@ applyTheme();
 // ---------- every tap goes through here ----------
 const ACT={
   day:d=>go(Number(d.n)),today:goToday,goals:()=>nav(sheetGoals),add:d=>openAdd(d.meal),entry:d=>openEntry(d.id),
-  ring:d=>{RG={k:d.k};nav(sheetRing)},ringK:d=>{RG.k=d.k;sheetRing()},
+  ring:d=>{RG={k:d.k};nav(sheetRing)},fold:d=>fold(d.meal),again,group:d=>{GP={meal:d.meal,fid:d.fid};nav(sheetGroup)},ringK:d=>{RG.k=d.k;sheetRing()},
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
