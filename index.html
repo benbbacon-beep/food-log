@@ -195,7 +195,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='15';
+const APP_VERSION='16';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -366,6 +366,14 @@ document.addEventListener('visibilitychange',()=>{
 
 // ---------- main screen ----------
 const RING=2*Math.PI*31; // length of a ring's circle
+// a ring's filled arc; past 100% a second lap in a darker shade, with a shadow, shows how far over (capped at 200%)
+function arcs(c,R,sw,col,ratio){
+  if(!(ratio>0))return '';
+  const C=2*Math.PI*R,one=(len,st)=>`<circle cx="${c}" cy="${c}" r="${R}" fill="none" style="stroke:${st.col};${st.sh||''}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${Math.max(0.1,len).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${c} ${c})"/>`;
+  let h=one(C*Math.min(1,ratio),{col});
+  if(ratio>1.005)h+=one(C*Math.min(1,ratio-1),{col:`color-mix(in srgb,${col} 62%,#000)`,sh:'filter:drop-shadow(0 0 1.5px rgba(0,0,0,.55))'});
+  return h;
+}
 function totals(es){const t={kcal:0,fat:0,protein:0,net:0};es.forEach(e=>MKEYS.forEach(m=>t[m]+=e[m]));return t}
 function banners(){
   let h='';
@@ -392,7 +400,7 @@ function render(){
   for(const [k,label,u,col,cap] of MACROS){
     const goal=g[k]||0,val=t[k],frac=goal?Math.min(1,val/goal):0,over=goal&&val>goal+0.05,un=k==='kcal'?'':' g';
     const sub=!ready?'&nbsp;':!goal?'No goal':over?fmt(val-goal)+un+' over':fmt(goal-val)+un+' left';
-    const arc=frac>0?`<circle cx="38" cy="38" r="31" fill="none" style="stroke:${over&&cap?'var(--bad)':col}" stroke-width="8" stroke-linecap="round" stroke-dasharray="${(RING*frac).toFixed(1)} ${RING.toFixed(1)}" transform="rotate(-90 38 38)"/>`:'';
+    const arc=ready&&goal?arcs(38,31,8,over&&cap?'var(--bad)':col,val/goal):'';
     h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" style="stroke:${tint(col)}" stroke-width="8"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></button>`;
   }
   h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
@@ -478,7 +486,7 @@ function chart(t,g,ready,meal){
   for(const [k,,R,col,cap] of CH){
     const C=2*Math.PI*R,goal=g[k]||0,f=goal?Math.min(1,t[k]/goal):0,over=goal&&t[k]>goal+0.05,c=over&&cap&&!meal?'var(--bad)':col;
     svg+=`<circle cx="60" cy="60" r="${R}" fill="none" style="stroke:${tint(col)}" stroke-width="11"/>`;
-    if(ready&&f>0)svg+=`<circle cx="60" cy="60" r="${R}" fill="none" style="stroke:${c}" stroke-width="11" stroke-linecap="round" stroke-dasharray="${Math.max(0.1,C*f).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 60 60)"/>`;
+    if(ready&&goal)svg+=arcs(60,R,11,c,t[k]/goal);
   }
   const gk=g.kcal||0;
   let h=`<div class="gc"><svg class="gcw" viewBox="0 0 120 120" aria-hidden="true">${svg}</svg><div class="gside"><div class="gk"><b>${ready?fmt(t.kcal):'–'}</b> ${meal?`kcal<small>${gk?r0(t.kcal/gk*100)+"% of today's calories":''}</small>`:`<span>/ ${gk?fmt(gk):'–'} kcal</span><small>${!ready||!gk?'&nbsp;':t.kcal>gk?fmt(t.kcal-gk)+' over':fmt(gk-t.kcal)+' left'}</small>`}</div>`;
