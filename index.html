@@ -187,6 +187,17 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .setup{padding:40px 10px;text-align:center;color:var(--dim)}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
 input[type=number]{-moz-appearance:textfield}
+.scan{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border-radius:14px;background:var(--card);color:var(--text);font-weight:600;margin-top:8px}
+.inp.warn{border-color:var(--net);background:color-mix(in srgb,var(--net) 12%,var(--card))}
+.scannote{font-size:12px;color:var(--warn);margin-top:10px}
+.maths{font-size:12px;color:var(--dim);margin-top:6px}
+.crop{position:relative;margin:4px auto 0;touch-action:none;user-select:none;-webkit-user-select:none}
+.crop canvas{display:block;width:100%;height:100%;border-radius:8px}
+.cbox{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.5);outline:1px solid rgba(0,0,0,.4);touch-action:none}
+.crop{overflow:hidden;border-radius:8px}
+.hd{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;touch-action:none}
+.hd::after{content:'';position:absolute;left:12px;top:12px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.scanmsg{text-align:center;color:var(--dim);font-size:14px;padding:10px 0;min-height:40px}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}}
 </style>
 </head>
@@ -195,7 +206,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='16';
+const APP_VERSION='17';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -204,7 +215,8 @@ const MKEYS=['kcal','fat','protein','net'];
 const $=s=>document.querySelector(s);
 const svg=(d,n)=>`<svg aria-hidden="true" width="${n||20}" height="${n||20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const IC={left:svg('<path d="M15 6l-6 6 6 6"/>'),right:svg('<path d="M9 6l6 6-6 6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>',18),plus:svg('<path d="M12 5v14M5 12h14"/>'),
-  gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),chev:svg('<path d="M6 9l6 6 6-6"/>',18)};
+  gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),chev:svg('<path d="M6 9l6 6 6-6"/>',18),
+  cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
 const MI={breakfast:svg('<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 9V6M5.6 11.6 4.2 10.2M18.4 11.6l1.4-1.4"/>',22),
   lunch:svg('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',22),
   dinner:svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',22),
@@ -659,26 +671,104 @@ function amDelete(){
 
 // ----- food form -----
 let FF={id:null,unit:'g'};
-function openFoodForm(id,name){FF={id:id||null,name:name||'',unit:null};nav(sheetFood)}
+function openFoodForm(id,name){FF={id:id||null,name:name||'',unit:null,draft:null,scan:null};nav(sheetFood)}
 function sheetFood(){
   const f=FF.id?view().foods.find(x=>x.id===realId(FF.id)):null;
-  const x=f||{name:FF.name,unit:'g',label:'serving',kcal:'',fat:'',protein:'',net:'',defQty:''};
-  FF.unit=x.unit;
+  const x=FF.draft||f||{name:FF.name,unit:'g',label:'serving',kcal:'',fat:'',protein:'',net:'',defQty:''};
+  FF.unit=x.unit;const sc=FF.scan,w=k=>sc&&sc.flags[k]&&sc.flags[k]!=='ok'?' warn':'';
   sheetEl.innerHTML=head(f?'Edit food':'New food')+`<div class="sh-body form">
+  ${f?'':`<button class="scan" data-act="scan">${IC.cam} ${sc?'Scan again':'Scan a nutrition label'}</button>`}
+  ${sc?`<div class="scannote">${sc.nWarn?`Check the amber boxes against the label: ${sc.nWarn===1?'that one was':'those were'} hard to read.`:'Read from the label. Give it a quick check.'}</div>
+  <div class="chips" style="margin:10px 0 0">${[['eu','UK / EU label'],['us','US label']].map(([r,l])=>`<button class="chip ${sc.region===r?'on':''}" data-act="ffRegion" data-r="${r}">${l}</button>`).join('')}</div>`:''}
   <label for="ff_name">Name</label><input class="inp" id="ff_name" value="${esc(x.name)}" placeholder="e.g. Tesco smoked mackerel" autocomplete="off" enterkeyhint="next">
   <label>Values are per</label><div class="chips" style="margin:0">${[['g','100 g'],['ml','100 ml'],['serving','1 serving']].map(([u,l])=>`<button class="chip ${x.unit===u?'on':''}" data-act="ffUnit" data-u="${u}">${l}</button>`).join('')}</div>
   <div id="ff_lab" style="display:${x.unit==='serving'?'block':'none'}"><label for="ff_label">Serving name</label><input class="inp" id="ff_label" value="${esc(x.unit==='serving'?x.label:'serving')}" placeholder="e.g. egg, bar, burger" autocomplete="off"></div>
-  <div class="grid2"><div><label for="ff_kcal">Calories (kcal)</label><input class="inp" id="ff_kcal" inputmode="decimal" value="${x.kcal}"></div><div><label for="ff_net">Net carbs (g)</label><input class="inp" id="ff_net" inputmode="decimal" value="${x.net}"></div>
-  <div><label for="ff_protein">Protein (g)</label><input class="inp" id="ff_protein" inputmode="decimal" value="${x.protein}"></div><div><label for="ff_fat">Fat (g)</label><input class="inp" id="ff_fat" inputmode="decimal" value="${x.fat}"></div></div>
-  <div class="hint" id="ff_chk" style="color:var(--warn)"></div><div class="hint">UK labels: net carbs = the "Carbohydrate" line (it already excludes fibre).</div>
-  <label for="ff_def">Usual amount</label><input class="inp" id="ff_def" inputmode="decimal" value="${x.defQty}" placeholder="optional">
+  <div class="grid2"><div><label for="ff_kcal">Calories (kcal)</label><input class="inp${w('kcal')}" id="ff_kcal" inputmode="decimal" value="${x.kcal??''}"></div><div><label for="ff_net">Net carbs (g)</label><input class="inp${w('net')}" id="ff_net" inputmode="decimal" value="${x.net??''}"></div>
+  <div><label for="ff_protein">Protein (g)</label><input class="inp${w('protein')}" id="ff_protein" inputmode="decimal" value="${x.protein??''}"></div><div><label for="ff_fat">Fat (g)</label><input class="inp${w('fat')}" id="ff_fat" inputmode="decimal" value="${x.fat??''}"></div></div>
+  <div class="hint" id="ff_chk" style="color:var(--warn)"></div><div class="maths" id="ff_maths">${sc?esc(sc.maths||''):''}</div><div class="hint">${sc?'':'UK labels: net carbs = the "Carbohydrate" line (it already excludes fibre). US labels: Total Carbohydrate minus fibre.'}</div>
+  <label for="ff_def">Usual amount</label><input class="inp${w('def')}" id="ff_def" inputmode="decimal" value="${x.defQty??''}" placeholder="optional">
   <div style="height:14px"></div><button class="primary" data-act="ffSave">${f?'Save changes':'Save food'}</button>
   ${f?'<div class="hint" style="text-align:center">Changing a food doesn\'t change entries already logged.</div>':''}
   </div>`;
   const chk=()=>{const n=k=>Number($('#ff_'+k).value.trim().replace(',','.')),kc=n('kcal'),est=4*n('protein')+4*n('net')+9*n('fat');
     $('#ff_chk').textContent=kc>0&&est>0&&Math.abs(kc-est)>Math.max(40,est*0.25)?`Check the numbers: that fat, protein and carbs come to about ${r0(est)} kcal.`:''};
   ['kcal','net','protein','fat'].forEach(k=>$('#ff_'+k).addEventListener('input',chk));chk();
-  if(!f)$(x.name?'#ff_kcal':'#ff_name').focus();
+  sheetEl.querySelectorAll('.inp').forEach(i=>i.addEventListener('input',()=>{i.classList.remove('warn');if(i.id==='ff_net')$('#ff_maths').textContent=''}));
+  if(sc){if(!x.name)$('#ff_name').focus()}else if(!f)$(x.name?'#ff_kcal':'#ff_name').focus();
+}
+// what's typed in the form, so it survives a trip to the scanner
+function ffDraft(){const v=k=>$('#ff_'+k).value.trim();return{name:v('name'),unit:FF.unit,label:FF.unit==='serving'?v('label'):'serving',kcal:v('kcal'),fat:v('fat'),protein:v('protein'),net:v('net'),defQty:v('def')}}
+function ffRegion(r){
+  const sc=FF.scan;if(!sc||sc.region===r)return;sc.region=r;
+  const c=FLLabel.compute(sc.res,r),n=$('#ff_net');n.value=c.vals.net??'';n.dispatchEvent(new Event('input')); // reruns the calorie check
+  n.classList.toggle('warn',sc.flags.net!=='ok');$('#ff_maths').textContent=c.maths;sc.maths=c.maths;
+  sheetEl.querySelectorAll('[data-act=ffRegion]').forEach(b=>b.classList.toggle('on',b.dataset.r===r));
+}
+
+// ----- label scanner (free OCR on the phone; the reader is downloaded on first use, then kept) -----
+let SC=null;
+const fileIn=Object.assign(document.createElement('input'),{type:'file',accept:'image/*'});
+fileIn.addEventListener('change',async()=>{const file=fileIn.files[0];fileIn.value='';if(!file)return;
+  let bmp;try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){return toast("Couldn't open that photo")}
+  SC={bmp,box:{x:.08,y:.08,w:.84,h:.84},busy:false};STACK[STACK.length-1]===sheetScan?navReplace(sheetScan):nav(sheetScan)});
+function startScan(){FF.draft=ffDraft();fileIn.click()}
+function loadReader(){
+  if(window.FLLabel&&window.Tesseract)return Promise.resolve();
+  const add=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('load'));document.head.appendChild(s)});
+  return add('ocr/tesseract.min.js').then(()=>add('ocr/label.js'));
+}
+function sheetScan(){
+  if(!SC)return back();
+  sheetEl.innerHTML=head('Scan label')+`<div class="sh-body">
+  <div class="hint" style="margin:0 0 8px">Drag the corners so the box covers just the nutrition table, including its "per 100g" heading.</div>
+  <div class="crop nodrag" id="crop"><canvas id="cropcv"></canvas><div class="cbox" id="cbox"></div>${['nw','ne','sw','se'].map(c=>`<div class="hd" data-c="${c}"></div>`).join('')}</div>
+  <div class="scanmsg" id="scanmsg" role="status"></div>
+  <button class="primary" data-act="scanRead" id="scanbtn">Read label</button>
+  <div class="links"><button class="link" data-act="scanRetake">Another photo</button></div></div>`;
+  const b=SC.bmp,el=$('#crop'),maxH=Math.max(260,innerHeight*.56),avail=el.parentNode.clientWidth;
+  const k=Math.min(avail/b.width,maxH/b.height),W=Math.round(b.width*k),H=Math.round(b.height*k);
+  el.style.width=W+'px';el.style.height=H+'px';
+  const cv=$('#cropcv'),dpr=Math.min(2,devicePixelRatio||1);cv.width=W*dpr;cv.height=H*dpr;cv.getContext('2d').drawImage(b,0,0,cv.width,cv.height);
+  const box=$('#cbox'),hs=[...el.querySelectorAll('.hd')];
+  const draw=()=>{const r=SC.box;Object.assign(box.style,{left:r.x*W+'px',top:r.y*H+'px',width:r.w*W+'px',height:r.h*H+'px'});
+    hs.forEach(h=>{const c=h.dataset.c;h.style.left=(c[1]==='w'?r.x:r.x+r.w)*W+'px';h.style.top=(c[0]==='n'?r.y:r.y+r.h)*H+'px'})};
+  draw();
+  let drag=null;const MIN=.06,cl=(v,a,z)=>Math.max(a,Math.min(z,v));
+  el.addEventListener('pointerdown',e=>{if(SC.busy)return;const t=e.target.closest('.hd,.cbox');if(!t)return;e.preventDefault();el.setPointerCapture(e.pointerId);
+    drag={c:t.dataset.c||'move',x:e.clientX,y:e.clientY,r:Object.assign({},SC.box)}});
+  el.addEventListener('pointermove',e=>{if(!drag)return;const dx=(e.clientX-drag.x)/W,dy=(e.clientY-drag.y)/H,o=drag.r,r=SC.box;
+    if(drag.c==='move'){r.x=cl(o.x+dx,0,1-o.w);r.y=cl(o.y+dy,0,1-o.h)}
+    else{let x0=o.x,y0=o.y,x1=o.x+o.w,y1=o.y+o.h;
+      if(drag.c[1]==='w')x0=cl(x0+dx,0,x1-MIN);else x1=cl(x1+dx,x0+MIN,1);
+      if(drag.c[0]==='n')y0=cl(y0+dy,0,y1-MIN);else y1=cl(y1+dy,y0+MIN,1);
+      Object.assign(r,{x:x0,y:y0,w:x1-x0,h:y1-y0})}
+    draw()});
+  const end=()=>{drag=null};el.addEventListener('pointerup',end);el.addEventListener('pointercancel',end);
+}
+async function scanRead(){
+  if(!SC||SC.busy)return;SC.busy=true;const btn=$('#scanbtn'),msg=t=>{const m=$('#scanmsg');if(m)m.textContent=t};btn.disabled=true;
+  const mine=SC;
+  try{
+    msg(window.Tesseract?'Reading the label…':'Getting the reader ready… (the first time downloads about 7 MB)');
+    await loadReader();
+    // cut out the box at full photo resolution, sized so the text is big enough for the reader
+    const b=SC.bmp,r=SC.box,sx=r.x*b.width,sy=r.y*b.height,sw=r.w*b.width,sh=r.h*b.height;
+    let k=Math.min(4,1800/sw);if(sw*k>2400)k=2400/sw;if(sw*k*sh*k>7e6)k=Math.sqrt(7e6/(sw*sh));
+    const cv=document.createElement('canvas');cv.width=Math.round(sw*k);cv.height=Math.round(sh*k);
+    const ctx=cv.getContext('2d',{willReadFrequently:true});ctx.imageSmoothingQuality='high';ctx.drawImage(b,sx,sy,sw,sh,0,0,cv.width,cv.height);
+    const res=await FLLabel.read(cv,msg);
+    if(SC!==mine||STACK[STACK.length-1]!==sheetScan)return; // he backed out while it was reading
+    applyScan(res);SC=null;back();
+  }catch(e){
+    if(SC===mine){SC.busy=false;btn.disabled=false;msg(e&&e.message==='load'?"Couldn't download the reader. It needs signal the first time.":"Couldn't read that. Try another photo, closer and without glare.")}
+  }
+}
+function applyScan(res){
+  const d=FF.draft||{name:'',unit:'g',label:'serving'},v=res.vals,f=res.flags;
+  const flags={kcal:f.kcal,fat:f.fat,protein:f.protein,net:f.carbs==='ok'&&(res.region!=='us'||f.fibre==='ok')?'ok':f.carbs==='missing'?'missing':'unsure',def:res.defQty==null?'ok':res.servFlag};
+  FF.draft=Object.assign({},d,{unit:res.unit,label:res.unit==='serving'?(res.label||'serving'):d.label,kcal:v.kcal,fat:v.fat,protein:v.protein,net:v.net,defQty:res.defQty??d.defQty});
+  const nWarn=['kcal','fat','protein','net','def'].filter(k=>flags[k]!=='ok').length;
+  FF.scan={res,region:res.region,flags,maths:res.maths,nWarn};
 }
 function ffUnit(u){FF.unit=u;sheetEl.querySelectorAll('[data-u]').forEach(c=>c.classList.toggle('on',c.dataset.u===u));$('#ff_lab').style.display=u==='serving'?'block':'none'}
 function ffSave(){
@@ -805,7 +895,7 @@ const ACT={
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
-  ffUnit:d=>ffUnit(d.u),ffSave,saveGoals,band:d=>setTheme({band:d.b}),mode:d=>setTheme({mode:d.m}),
+  ffUnit:d=>ffUnit(d.u),ffSave,scan:startScan,ffRegion:d=>ffRegion(d.r),scanRead,scanRetake:()=>fileIn.click(),saveGoals,band:d=>setTheme({band:d.b}),mode:d=>setTheme({mode:d.m}),
   retryHeld,discardHeld,sendNow:()=>flush(true),reloadData:()=>load(),reload:()=>location.reload(),
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const fn=ACT[el.dataset.act];if(fn)fn(el.dataset,el)});
