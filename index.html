@@ -206,7 +206,7 @@ input[type=number]{-moz-appearance:textfield}
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
 <script>
-const APP_VERSION='17';
+const APP_VERSION='18';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -677,7 +677,7 @@ function sheetFood(){
   const x=FF.draft||f||{name:FF.name,unit:'g',label:'serving',kcal:'',fat:'',protein:'',net:'',defQty:''};
   FF.unit=x.unit;const sc=FF.scan,w=k=>sc&&sc.flags[k]&&sc.flags[k]!=='ok'?' warn':'';
   sheetEl.innerHTML=head(f?'Edit food':'New food')+`<div class="sh-body form">
-  ${f?'':`<button class="scan" data-act="scan">${IC.cam} ${sc?'Scan again':'Scan a nutrition label'}</button>`}
+  ${f?'':`<button class="scan" data-act="scan">${IC.cam} ${sc?'Scan again':'Scan a nutrition label'}</button><div class="links" style="margin-top:0"><button class="link" data-act="scanPick" style="font-size:13px;padding:6px 0">or pick a photo</button></div>`}
   ${sc?`<div class="scannote">${sc.nWarn?`Check the amber boxes against the label: ${sc.nWarn===1?'that one was':'those were'} hard to read.`:'Read from the label. Give it a quick check.'}</div>
   <div class="chips" style="margin:10px 0 0">${[['eu','UK / EU label'],['us','US label']].map(([r,l])=>`<button class="chip ${sc.region===r?'on':''}" data-act="ffRegion" data-r="${r}">${l}</button>`).join('')}</div>`:''}
   <label for="ff_name">Name</label><input class="inp" id="ff_name" value="${esc(x.name)}" placeholder="e.g. Tesco smoked mackerel" autocomplete="off" enterkeyhint="next">
@@ -707,11 +707,14 @@ function ffRegion(r){
 
 // ----- label scanner (free OCR on the phone; the reader is downloaded on first use, then kept) -----
 let SC=null;
+// camera: opens the camera straight away, and the shot comes to the app without going into his photos
+const camIn=Object.assign(document.createElement('input'),{type:'file',accept:'image/*'});camIn.setAttribute('capture','environment');
 const fileIn=Object.assign(document.createElement('input'),{type:'file',accept:'image/*'});
-fileIn.addEventListener('change',async()=>{const file=fileIn.files[0];fileIn.value='';if(!file)return;
+const onPhoto=async fileIn=>{const file=fileIn.files[0];fileIn.value='';if(!file)return;
   let bmp;try{bmp=await createImageBitmap(file,{imageOrientation:'from-image'})}catch(e){return toast("Couldn't open that photo")}
-  SC={bmp,box:{x:.08,y:.08,w:.84,h:.84},busy:false};STACK[STACK.length-1]===sheetScan?navReplace(sheetScan):nav(sheetScan)});
-function startScan(){FF.draft=ffDraft();fileIn.click()}
+  SC={bmp,box:{x:.08,y:.08,w:.84,h:.84},busy:false};STACK[STACK.length-1]===sheetScan?navReplace(sheetScan):nav(sheetScan)};
+camIn.addEventListener('change',()=>onPhoto(camIn));fileIn.addEventListener('change',()=>onPhoto(fileIn));
+function startScan(pick){FF.draft=ffDraft();(pick?fileIn:camIn).click()}
 function loadReader(){
   if(window.FLLabel&&window.Tesseract)return Promise.resolve();
   const add=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('load'));document.head.appendChild(s)});
@@ -724,8 +727,8 @@ function sheetScan(){
   <div class="crop nodrag" id="crop"><canvas id="cropcv"></canvas><div class="cbox" id="cbox"></div>${['nw','ne','sw','se'].map(c=>`<div class="hd" data-c="${c}"></div>`).join('')}</div>
   <div class="scanmsg" id="scanmsg" role="status"></div>
   <button class="primary" data-act="scanRead" id="scanbtn">Read label</button>
-  <div class="links"><button class="link" data-act="scanRetake">Another photo</button></div></div>`;
-  const b=SC.bmp,el=$('#crop'),maxH=Math.max(260,innerHeight*.56),avail=el.parentNode.clientWidth;
+  <div class="links"><button class="link" data-act="scanRetake">Retake</button><button class="link" data-act="scanPickAgain">Pick a photo</button></div></div>`;
+  const b=SC.bmp,el=$('#crop'),maxH=Math.max(260,innerHeight*.56),avail=el.parentNode.clientWidth-28;
   const k=Math.min(avail/b.width,maxH/b.height),W=Math.round(b.width*k),H=Math.round(b.height*k);
   el.style.width=W+'px';el.style.height=H+'px';
   const cv=$('#cropcv'),dpr=Math.min(2,devicePixelRatio||1);cv.width=W*dpr;cv.height=H*dpr;cv.getContext('2d').drawImage(b,0,0,cv.width,cv.height);
@@ -895,7 +898,7 @@ const ACT={
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
-  ffUnit:d=>ffUnit(d.u),ffSave,scan:startScan,ffRegion:d=>ffRegion(d.r),scanRead,scanRetake:()=>fileIn.click(),saveGoals,band:d=>setTheme({band:d.b}),mode:d=>setTheme({mode:d.m}),
+  ffUnit:d=>ffUnit(d.u),ffSave,scan:()=>startScan(false),scanPick:()=>startScan(true),ffRegion:d=>ffRegion(d.r),scanRead,scanRetake:()=>camIn.click(),scanPickAgain:()=>fileIn.click(),saveGoals,band:d=>setTheme({band:d.b}),mode:d=>setTheme({mode:d.m}),
   retryHeld,discardHeld,sendNow:()=>flush(true),reloadData:()=>load(),reload:()=>location.reload(),
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const fn=ACT[el.dataset.act];if(fn)fn(el.dataset,el)});

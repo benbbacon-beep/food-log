@@ -87,11 +87,11 @@ function parseOne(text){
   if(/per\s*1[0o]{2}\s*m[l1]|1[0o]{2}\s*m[l1]\b/.test(low))R.per100='ml';else if(/per\s*1[0o]{2}/.test(low))R.per100='g';
   // serving size in grams
   let m=/(?:serv|erv)\w*\W*s\w*[^\n(]*\(\s*(\d+(?:[.,]\d+)?)\s*(g|9|y|ml)?\s*\)?/i.exec(text);
-  if(m){let v=m[1].replace(',','.');if(!m[2]&&/\d9$/.test(v))v=v.slice(0,-1);R.servG.push({v:Number(v),pen:m[2]?0:.5,ml:m[2]==='ml'})}
+  if(m){let v=m[1].replace(',','.');if(!m[2]&&/\d9$/.test(v))v=v.slice(0,-1);R.servG.push({v:Number(v),pen:m[2]?0:.5,ml:/^ml$/i.test(m[2]||'')})}
   const st=/serv\w*\s*size\s*([^\n(]*)/i.exec(text);if(st)R.servText=st[1].replace(/[^\w\/.\s]/g,'').trim().slice(0,30)
   for(const re of [/per\s*(\d{1,4})\s*([g9c(6o0]|ml)?\s*serv/ig,/(\d{2,4})\s*([gq9]|ml)\s*serv/ig,/\/\s*per\s*(\d{1,3})\s*(g|ml)?/ig]){
     let x;while((x=re.exec(text))){const v=x[1];
-      if(x[2]&&/^(g|ml|q)$/i.test(x[2]))R.servG.push({v:Number(v),pen:.2});
+      if(x[2]&&/^(g|ml|q)$/i.test(x[2]))R.servG.push({v:Number(v),pen:.2,ml:/^ml$/i.test(x[2])});
       else{R.servG.push({v:Number(v),pen:.6});if(v.length>=3&&/[0689]$/.test(v))R.servG.push({v:Number(v.slice(0,-1)),pen:.4})}}}
   let lastKind=null;
   for(const L of lines){
@@ -155,7 +155,7 @@ function parseLabel(texts){
   const pickOne=k=>{const a=C[k];return a.length?a[0]:null};
   const sa=pickOne('sa'),ery=pickOne('ery'),allu=pickOne('allu');
   const servOk=best.s.v!=null&&Object.keys(best.agree).length>=2||best.s.v!=null&&best.s.pen<=.2&&servs.filter(x=>x.v===best.s.v).length>=1&&!servs.some(x=>x.pen<=.2&&x.v!==best.s.v);
-  const out={servFlag:best.s.v==null?'missing':servOk?'ok':'unsure',region,basis:per?(per100||'g'):'serving',servG:best.s.v,servText:(P.find(p=>p.servText)||{}).servText||'',raw:{},flags:{},kjOnly};
+  const out={servFlag:best.s.v==null?'missing':servOk?'ok':'unsure',region,basis:per?(per100||'g'):'serving',servG:best.s.v,servMl:!!best.s.ml,servText:(P.find(p=>p.servText)||{}).servText||'',raw:{},flags:{},kjOnly};
   // sure = the calorie check passed with little guessing, or (no check possible) both readings agreed on it as printed
   const put=(k,c)=>{out.raw[k]=c&&c.v!=null?c.v:null;out.flags[k]=!c||c.v==null?'missing':(best.fits?c.pen<=(best.agree[k]?1:.45):(c.seen>=2&&c.pen<=0))?'ok':'unsure'};
   put('kcal',best.kc);put('fat',best.f);put('carbs',best.c);put('fibre',best.fb.v==null?null:best.fb);put('protein',best.p);
@@ -186,7 +186,7 @@ function compute(o,region){
   const maths=r.carbs==null||!parts.length?'':(o.basis==='serving'?'Per serving: net ':'Net ')+F(net)+' g = '+F(r.carbs)+' carbs − '+parts.join(' − ');
   // per 100 g when the grams are known, else per 1 serving
   let unit=o.basis,k=1,label='';
-  if(o.basis==='serving'){if(o.servG){unit='g';k=100/o.servG}else{unit='serving';label=o.servText||'serving'}}
+  if(o.basis==='serving'){if(o.servG){unit=o.servMl?'ml':'g';k=100/o.servG}else{unit='serving';label=o.servText||'serving'}}
   const sc=x=>x==null?null:Math.round(x*k*10)/10;
   return {region,unit,label,vals:{kcal:o.raw.kcal==null?null:Math.round(o.raw.kcal*k),fat:sc(r.fat),protein:sc(r.protein),net:sc(net)},defQty:o.servG||null,maths};
 }
