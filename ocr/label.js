@@ -173,7 +173,8 @@ function compute(o,region){
     net=r.carbs;
     const fib=region==='us'?(r.fibre||0):0;
     if(fib){net-=fib;parts.push(F(fib)+' fibre')}
-    const sa=r.sa||0,ery=Math.min(sa||Infinity,r.ery||0),allu=r.allu||0;
+    // UK/EU: the Carbohydrate line as printed (his rule). Sugar alcohols and allulose only come off US labels.
+    const us=region==='us',sa=us?(r.sa||0):0,ery=us?Math.min(sa||Infinity,r.ery||0):0,allu=us?(r.allu||0):0;
     if(allu){net-=allu;parts.push(F(allu)+' allulose')}
     if(sa){
       const full=o.ingredientsEryOnly?sa:ery,half=(sa-full)/2;
