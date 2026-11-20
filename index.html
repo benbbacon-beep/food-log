@@ -198,6 +198,30 @@ input[type=number]{-moz-appearance:textfield}
 .hd{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;touch-action:none}
 .hd::after{content:'';position:absolute;left:12px;top:12px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5)}
 .scanmsg{text-align:center;color:var(--dim);font-size:14px;padding:10px 0;min-height:40px}
+.saybar{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border-radius:20px;padding:10px 14px 10px 10px;margin-bottom:12px;box-shadow:var(--shadow);color:var(--dim);font-weight:600;text-align:left}
+.saybar:disabled{opacity:.5}
+.saymic{width:40px;height:40px;border-radius:20px;background:var(--acc);color:var(--onacc);display:grid;place-items:center;flex:none}
+.saytxt{width:100%;min-height:110px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;font:inherit;font-size:17px;resize:vertical}
+.saytxt:focus{border-color:var(--acc)}
+.bigmic{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:14px;background:var(--card);font-weight:700;margin:10px 0}
+.bigmic.on{background:var(--bad);color:#fff}
+.bigmic.on svg{animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.4}}
+.sayrow{background:var(--card);border-radius:14px;padding:10px 12px;margin-top:8px}
+.sayrow .top{display:flex;align-items:center;gap:8px}
+.sayrow .fn{flex:1;min-width:0;text-align:left;font-weight:600;padding:6px 0;line-height:1.25}
+.sayrow .fn small{display:block;font-weight:500;color:var(--faint);font-size:12px}
+.sayrow .fn.warn{color:var(--warn)}
+.sayrow .nf{color:var(--bad)}
+.sayrow .x{width:36px;height:36px;border-radius:18px;color:var(--faint);display:grid;place-items:center;flex:none}
+.sayrow .amt{display:flex;align-items:center;gap:8px;margin-top:4px}
+.sayrow .amt input{width:96px;padding:9px 10px;font-size:17px;font-weight:600}
+.sayrow .amt span{color:var(--dim);font-size:14px}
+.sayrow .amt .m{margin-left:auto;text-align:right;font-size:12px;color:var(--dim);white-space:nowrap}
+.sayrow .amt .m b{color:var(--text);font-size:14px}
+.sayrow .note{font-size:12px;color:var(--warn);margin-top:4px}
+.saytot{font-size:13px;color:var(--dim);margin:12px 2px}
+.saytot b{color:var(--text)}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}}
 </style>
 </head>
@@ -205,8 +229,9 @@ input[type=number]{-moz-appearance:textfield}
 <div class="wrap" id="app"></div>
 <div id="layer"><div class="scrim" id="scrim"></div><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="toast" id="toast" role="status"></div>
+<script src="say.js"></script>
 <script>
-const APP_VERSION='19';
+const APP_VERSION='20';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -216,7 +241,8 @@ const $=s=>document.querySelector(s);
 const svg=(d,n)=>`<svg aria-hidden="true" width="${n||20}" height="${n||20}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const IC={left:svg('<path d="M15 6l-6 6 6 6"/>'),right:svg('<path d="M9 6l6 6-6 6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>',18),plus:svg('<path d="M12 5v14M5 12h14"/>'),
   gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),chev:svg('<path d="M6 9l6 6 6-6"/>',18),
-  cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')};
+  cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),
+  mic:svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')};
 const MI={breakfast:svg('<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 9V6M5.6 11.6 4.2 10.2M18.4 11.6l1.4-1.4"/>',22),
   lunch:svg('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',22),
   dinner:svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',22),
@@ -417,6 +443,7 @@ function render(){
     h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" style="stroke:${tint(col)}" stroke-width="8"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></button>`;
   }
   h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
+  h+=`<button class="saybar" data-act="say" ${ready?'':'disabled'}><span class="saymic">${IC.mic}</span>Say or type what you ate</button>`;
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
     const tot=es.length?kc(mt.kcal)+' kcal, '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
@@ -672,7 +699,7 @@ function amDelete(){
 
 // ----- food form -----
 let FF={id:null,unit:'g'};
-function openFoodForm(id,name){FF={id:id||null,name:name||'',unit:null,draft:null,scan:null};nav(sheetFood)}
+function openFoodForm(id,name,onSaved){FF={id:id||null,name:name||'',unit:null,draft:null,scan:null,onSaved:onSaved||null};nav(sheetFood)}
 function sheetFood(){
   const f=FF.id?view().foods.find(x=>x.id===realId(FF.id)):null;
   const x=FF.draft||f||{name:FF.name,unit:'g',label:'serving',kcal:'',fat:'',protein:'',net:'',defQty:''};
@@ -704,6 +731,96 @@ function ffRegion(r){
   const c=FLLabel.compute(sc.res,r),n=$('#ff_net');n.value=c.vals.net??'';n.dispatchEvent(new Event('input')); // reruns the calorie check
   n.classList.toggle('warn',sc.flags.net!=='ok');$('#ff_maths').textContent=c.maths;sc.maths=c.maths;
   sheetEl.querySelectorAll('[data-act=ffRegion]').forEach(b=>b.classList.toggle('on',b.dataset.r===r));
+}
+
+// ----- say what you ate: speak or type, check, then log -----
+let SY=null,REC=null;
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const ALIAS=ls.get('fl_alias',{}); // phrases he's taught it: "almond milk" -> f002
+function openSay(){SY={text:'',meal:mealNow(),rows:[]};nav(sheetSay);if(SR)micStart()}
+function sheetSay(){
+  sheetEl.innerHTML=head('What did you have?')+`<div class="sh-body">
+  <textarea class="saytxt" id="saytxt" placeholder="e.g. 100 ml avocado oil, 2 eggs and a tablespoon of peanut butter" enterkeyhint="done">${esc(SY.text)}</textarea>
+  ${SR?`<button class="bigmic" id="bigmic" data-act="mic">${IC.mic} <span id="micl">Tap to speak</span></button>`:''}
+  <div class="hint" id="saymsg" style="margin:0 0 12px">Say the amount and the food. Add "for lunch" to pick the meal.</div>
+  <button class="primary" data-act="sayNext">Next</button></div>`;
+  const t=$('#saytxt');t.addEventListener('input',()=>{SY.text=t.value});t.addEventListener('focus',micStop);
+  t.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sayNext()}});
+  micShow();
+}
+function micShow(){const b=$('#bigmic');if(!b)return;b.classList.toggle('on',!!REC);$('#micl').textContent=REC?'Listening… tap to stop':'Tap to speak'}
+function micStart(){
+  if(!SR||REC)return;
+  const r=new SR(),base=SY.text?SY.text.replace(/\s*$/,', '):'';let heard='',done=false;
+  r.lang='en-GB';r.interimResults=true;r.continuous=false;
+  r.onresult=e=>{heard=[...e.results].map(x=>x[0].transcript).join(' ');SY.text=base+heard;const t=$('#saytxt');if(t)t.value=SY.text;done=[...e.results].every(x=>x.isFinal)};
+  r.onerror=e=>{const m=$('#saymsg');if(m)m.textContent=e.error==='not-allowed'||e.error==='service-not-allowed'?'The microphone is blocked for this app. Allow it in Chrome\'s site settings, or type instead.':e.error==='network'?'The mic needs signal. You can type instead.':e.error==='no-speech'?'Didn\'t hear anything. Tap to try again.':'The mic stopped. Tap to try again, or type.'};
+  r.onend=()=>{REC=null;micShow();if(heard&&STACK[STACK.length-1]===sheetSay)sayNext()};
+  try{r.start();REC=r}catch(e){REC=null}
+  micShow();
+}
+function micStop(){if(REC){const r=REC;REC=null;try{r.stop()}catch(e){}micShow()}}
+function sayNext(){
+  micStop();const txt=(SY.text||'').trim();if(!txt)return toast('Say or type what you had');
+  const p=FLSay.parse(txt,view().foods,ALIAS,mealNow());
+  SY.meal=p.meal;SY.rows=p.rows;
+  if(!p.rows.length)return toast("Couldn't find a food in that");
+  nav(sheetSayCheck);
+}
+const syUnit=f=>f.unit==='serving'?f.label:f.unit;
+const syMac=r=>{if(!r.food||!(r.qty>0))return null;const k=r.qty/r.food.per;return{kcal:r.food.kcal*k,net:r.food.net*k,protein:r.food.protein*k,fat:r.food.fat*k}};
+const syOk=()=>SY.rows.length&&SY.rows.every(r=>r.food&&r.qty>0);
+function sheetSayCheck(){
+  if(!SY)return back();
+  const rows=SY.rows.map((r,i)=>{const f=r.food,m=syMac(r);
+    const name=f?`<button class="fn ${r.sure?'':'warn'}" data-act="sayPick" data-i="${i}">${esc(f.name)}<small>${r.sure?'You said':'Best guess for'} “${esc(r.phrase)}” · tap to change</small></button>`
+      :`<button class="fn" data-act="sayPick" data-i="${i}"><span class="nf">“${esc(r.phrase)}” not found</span><small>Tap to find it or add a new food</small></button>`;
+    return `<div class="sayrow">${'<div class="top">'+name+`<button class="x" aria-label="Remove" data-act="sayDel" data-i="${i}">${IC.x}</button></div>`}
+    ${f?`<div class="amt"><input class="inp${r.qtyState==='ok'?'':' warn'}" id="sq${i}" data-i="${i}" inputmode="decimal" value="${r.qty??''}" placeholder="?"><span>${esc(syUnit(f))}</span><div class="m" id="sm${i}">${m?`<b>${kc(m.kcal)}</b> kcal<br>${fmt(m.net)} g net`:''}</div></div>${r.note&&r.qtyState!=='ok'?`<div class="note" id="sn${i}">${esc(r.note)}</div>`:''}`:''}</div>`}).join('');
+  sheetEl.innerHTML=head('Check and log')+`<div class="sh-body">
+  <div class="chips" style="margin:4px 0 6px">${MEALS.map(([m,l])=>`<button class="chip ${SY.meal===m?'on':''}" data-act="sayMeal" data-m="${m}">${l==='Snacks'?'Snack':l}</button>`).join('')}</div>
+  ${rows}
+  <div class="saytot" id="saytot"></div>
+  <button class="primary" data-act="sayLog" id="saylog">Log</button>
+  <div class="links"><button class="link" data-act="close">Change what I said</button></div></div>`;
+  sheetEl.querySelectorAll('.amt input').forEach(inp=>inp.addEventListener('input',()=>{const r=SY.rows[inp.dataset.i],v=Number(inp.value.trim().replace(',','.'));
+    r.qty=inp.value.trim()===''||!(v>0)?null:v;r.qtyState='ok';inp.classList.remove('warn');const n=$('#sn'+inp.dataset.i);if(n)n.remove();sayRefresh()}));
+  sayRefresh();
+}
+function sayRefresh(){
+  SY.rows.forEach((r,i)=>{const el=$('#sm'+i),m=syMac(r);if(el)el.innerHTML=m?`<b>${kc(m.kcal)}</b> kcal<br>${fmt(m.net)} g net`:''});
+  const t={kcal:0,net:0,protein:0,fat:0};SY.rows.forEach(r=>{const m=syMac(r);if(m)MKEYS.forEach(k=>t[k]+=m[k])});
+  const tot=$('#saytot');if(tot)tot.innerHTML=`Total <b>${kc(t.kcal)} kcal</b> · ${fmt(t.net)} g net · ${fmt(t.protein)} g protein · ${fmt(t.fat)} g fat`;
+  const b=$('#saylog');if(b){const n=SY.rows.length,bad=SY.rows.filter(r=>!(r.food&&r.qty>0)).length;b.textContent=bad?`Fix ${bad} to log`:`Log ${n} food${n===1?'':'s'} to ${mealName(SY.meal)}`;b.disabled=!!bad}
+}
+let SP=null; // which row is being changed
+function sheetSayPick(){
+  const r=SY&&SY.rows[SP];if(!r)return back();
+  if(SY.skipPick){SY.skipPick=false;return back()} // just added a new food for this row: straight back to the check screen
+  sheetEl.innerHTML=head('Which food?')+`<div class="sh-body"><input class="search" id="spq" value="${esc(r.phrase)}" placeholder="Search your foods" autocomplete="off" enterkeyhint="search">
+  <div id="spl"></div><button class="secondary" data-act="sayNew">New food “${esc(cut(r.phrase,24))}”</button></div>`;
+  const q=$('#spq'),draw=()=>{const v=view(),words=norm(q.value).split(/\s+/).filter(Boolean);
+    let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))});
+    if(q.value.trim()===r.phrase){const ranked=[r.food,...r.alts].filter(Boolean).map(f=>v.foods.find(x=>x.id===f.id)||f);fs=ranked.concat(fs.filter(f=>!ranked.includes(f)))}
+    fs=fs.filter((f,i,a)=>a.findIndex(x=>x.id===f.id)===i);
+    if(!fs.length&&words.length){const m=FLSay.match(q.value,v.foods,{});fs=[m.food,...m.alts].filter(Boolean)}
+    $('#spl').innerHTML=fs.slice(0,30).map(f=>`<div class="row frow"><button class="n" data-act="sayChoose" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${esc(perText(f))} · ${kc(f.kcal)} kcal, ${fmt(f.net)} g net</small></button></div>`).join('')||'<div class="empty">Nothing matches. Add it as a new food.</div>'};
+  q.addEventListener('input',draw);draw();
+}
+function sayChoose(id){
+  const r=SY.rows[SP],f=view().foods.find(x=>x.id===id);if(!r||!f)return back();
+  setRowFood(r,f);back();
+}
+function setRowFood(r,f){
+  r.food=f;r.sure=true;FLSay.amount(r);
+  if(r.key&&!String(f.id).startsWith('tmp')){ALIAS[r.key]=f.id;ls.set('fl_alias',ALIAS)} // remember: next time this phrase means this food
+}
+function sayLog(){
+  if(!syOk())return;
+  const meal=SY.meal,cids=[];
+  for(const r of SY.rows){const cid=newCid();cids.push(cid);submit({action:'add',cid,date:S.date,meal,foodId:r.food.id,qty:r2(r.qty)})}
+  const n=cids.length;SY=null;closeAll();if(navigator.vibrate)navigator.vibrate(8);
+  toast(`Logged ${n} food${n===1?'':'s'} to ${mealName(meal)}`,'Undo',()=>cids.forEach(cid=>{const job=Q.find(j=>j.action==='add'&&j.cid===cid);if(!(job&&unsend(job)))submit({action:'del',id:cid})}));
 }
 
 // ----- label scanner (free OCR on the phone; the reader is downloaded on first use, then kept) -----
@@ -785,6 +902,7 @@ function ffSave(){
   const id=FF.id?realId(FF.id):null,old=id?view().foods.find(x=>x.id===id):null;
   const tmp=Object.assign({id:id||('tmp'+Date.now().toString(36)),uses:old?old.uses:0,per:unit==='serving'?1:100},food);
   submit({action:'saveFood',food:id?Object.assign({id},food):food,tmpFood:tmp});
+  if(FF.onSaved){const cb=FF.onSaved;FF.onSaved=null;toast('Food saved');cb(tmp);back();return}
   if(id){toast('Food updated');back()}
   else{toast('Food saved');AM={fid:tmp.id,eid:null,meal:AD.meal,qty:tmp.defQty,fresh:true};navReplace(sheetAmount)}
 }
@@ -899,7 +1017,11 @@ const ACT={
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
-  ffUnit:d=>ffUnit(d.u),ffSave,scan:()=>startScan(false),scanPick:()=>startScan(true),ffRegion:d=>ffRegion(d.r),scanRead,scanRetake:()=>camIn.click(),scanPickAgain:()=>fileIn.click(),saveGoals,band:d=>setTheme({band:d.b}),mode:d=>setTheme({mode:d.m}),
+  ffUnit:d=>ffUnit(d.u),ffSave,say:openSay,mic:()=>REC?micStop():micStart(),sayNext,sayLog,
+  sayMeal:d=>{SY.meal=d.m;sheetEl.querySelectorAll('[data-act=sayMeal]').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m));sayRefresh()},
+  sayDel:d=>{SY.rows.splice(Number(d.i),1);if(!SY.rows.length)return back();sheetSayCheck()},
+  sayPick:d=>{SP=Number(d.i);nav(sheetSayPick)},sayChoose:d=>sayChoose(d.id),
+  sayNew:()=>{const r=SY.rows[SP];openFoodForm(null,$('#spq').value.trim()||r.phrase,tmp=>{r.food=tmp;r.sure=true;FLSay.amount(r);SY.skipPick=true})},scan:()=>startScan(false),scanPick:()=>startScan(true),ffRegion:d=>ffRegion(d.r),scanRead,scanRetake:()=>camIn.click(),scanPickAgain:()=>fileIn.click(),saveGoals,band:d=>setTheme({band:d.b}),mode:d=>setTheme({mode:d.m}),
   retryHeld,discardHeld,sendNow:()=>flush(true),reloadData:()=>load(),reload:()=>location.reload(),
 };
 document.addEventListener('click',e=>{const el=e.target.closest('[data-act]');if(!el||el.disabled)return;const fn=ACT[el.dataset.act];if(fn)fn(el.dataset,el)});

@@ -1,8 +1,8 @@
 // Bump CACHE with every release: that is what makes phones pick up the new version.
-const CACHE='food-log-v19';
+const CACHE='food-log-v20';
 // the label reader (~7 MB) lives in its own cache so app updates don't download it again
 const OCR='food-log-ocr-1';
-const SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','jakarta.woff2','ocr/label.js'];
+const SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','jakarta.woff2','ocr/label.js','say.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>c.addAll(SHELL.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 // only clear this app's own old caches: Tap Logger lives on the same web address and has its own
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(ks=>Promise.all(ks.filter(k=>k.startsWith('food-log-')&&k!==CACHE&&k!==OCR).map(k=>caches.delete(k)))).then(()=>self.clients.claim()))});
