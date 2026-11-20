@@ -24,7 +24,7 @@ function numberWords(s){
         // "a hundred and twenty", "one and a half"; but "two eggs and a coffee" stays split
         const nx=w[j+1]==='a'||w[j+1]==='an'?w[j+2]:w[j+1];
         if(nx in FRAC){cur+=FRAC[nx];j+=w[j+1]==='a'||w[j+1]==='an'?3:2;continue}
-        if(isN(nx)&&nx!=='a'&&nx!=='an'&&cur>=100){j++;continue}
+        if(nx in NUM&&nx!=='a'&&nx!=='an'&&NUM[nx]<100&&cur>=100&&cur%100===0){j++;continue}
         break}
       if(x in FRAC){cur=(any?cur:1)*FRAC[x];any=true;j++;if(w[j]==='a'||w[j]==='an'||w[j]==='of')j++;continue}
       break;
@@ -39,7 +39,8 @@ const UNITS=[[/^(g|gs|gram|grams|gramme|grammes|gm|gms|grm)$/,'g'],[/^(ml|mls|mi
 const unitOf=w=>{for(const [re,u] of UNITS)if(re.test(w))return u;return null};
 const MEALW={breakfast:'breakfast',brekkie:'breakfast',lunch:'lunch',dinner:'dinner',tea:'dinner',supper:'dinner',snack:'snack',snacks:'snack'};
 // words that say nothing about which food it is
-const STOP=new Set('i ive i\'ve had have just ate eaten some of the a an my with label per uk us generic raw cooked drained by la le de del and & original classic plain fresh'.split(' '));
+const STOP=new Set(('i ive i\'ve had have just ate eaten some of the a an my with label per uk us generic raw cooked drained by la le de del and & original classic plain fresh '+
+  'bag bags pack packs packet packets slice slices piece pieces tin tins can cans stick sticks portion portions serving servings').split(' '));
 // everyday words for things his food names call something else
 const SYN=[['milk','drink','alpro','unsweetened','oatly','oat','soya'],['mayo','mayonnaise'],['prawn','shrimp'],['rind','rinds','snack','puff','scratching','crackling','crunchy'],
   ['cheese','cheddar','gouda','camembert','halloumi','feta','mozzarella','leicester','gloucester','applewood','leerdammer'],['ham','prosciutto','parma'],
@@ -96,11 +97,16 @@ function chunk(c){
 }
 // what he said -> {meal, rows:[{said, phrase, food, sure, alts, qty, qtyState: ok|guess|blank, note}]}
 function parse(text,foods,alias,defaultMeal){
-  let s=text.replace(/\n/g,' , ').replace(/[,;]/g,' , ').replace(/\.(?!\d)/g,' , ');
+  let s=text.replace(/½/g,' 0.5 ').replace(/¼/g,' 0.25 ').replace(/¾/g,' 0.75 ').replace(/(\d+)\s*\/\s*(\d+)/g,(m,a,b)=>' '+String(Math.round(a/b*1000)/1000)+' ')
+    .replace(/(\d)\s+0\.(\d)/g,'$1.$2') // "1 ½" -> 1.5
+    .replace(/\n/g,' , ').replace(/[,;]/g,' , ').replace(/\.(?!\d)/g,' , ');
   s=norm(s.replace(/,/g,' qqcomma ')).replace(/qqcomma/g,',');
   let meal=null;
   s=s.replace(/\b(?:for|at|with|as|in)\s+(?:my\s+|a\s+|the\s+)?(breakfast|brekkie|lunch|dinner|tea|supper|snacks?)\b/g,(m,x)=>{meal=MEALW[x];return ' '});
   s=numberWords(s.replace(/\s+/g,' ').trim());
+  for(const f of foods){const n=norm(f.name).split(' ');
+    for(let i=1;i<n.length-1;i++)if(n[i]==='and'||n[i]==='&'){const a=n[i-1],b=n[i+1];
+      s=s.replace(new RegExp('\\b'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+' (?:and|&) '+b.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','g'),a+' & '+b)}}
   // speech has no commas: "avocado oil 2 eggs" is two foods. A number after some food words starts a new food,
   // unless it's the amount for the food just said ("almond milk 250 ml", end of the phrase or before "and")
   {const w=s.split(' '),o=[],SEP=x=>x===','||x==='and'||x==='then'||x==='plus'||x==='also'||x==='with';

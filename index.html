@@ -231,7 +231,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='20';
+const APP_VERSION='21';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -547,7 +547,7 @@ const STACK=[];
 const layer=$('#layer'),sheetEl=$('#sheet');
 function nav(fn){STACK.push(fn);history.pushState({sheet:STACK.length},'');fn();layer.classList.add('open');document.documentElement.classList.add('sheet-open')}
 function navReplace(fn){STACK[STACK.length-1]=fn;fn()}
-function hideLayer(){layer.classList.remove('open');document.documentElement.classList.remove('sheet-open');if(document.activeElement)document.activeElement.blur()}
+function hideLayer(){if(typeof micStop==='function')micStop();layer.classList.remove('open');document.documentElement.classList.remove('sheet-open');if(document.activeElement)document.activeElement.blur()}
 function closeAll(){const n=STACK.length;if(!n)return;STACK.length=0;hideLayer();history.go(-n)}
 function back(){if(STACK.length)history.back()}
 const leave=()=>STACK.length>1?back():closeAll(); // finished with this sheet: back to the food list if that's where we came from
@@ -755,11 +755,11 @@ function micStart(){
   r.lang='en-GB';r.interimResults=true;r.continuous=false;
   r.onresult=e=>{heard=[...e.results].map(x=>x[0].transcript).join(' ');SY.text=base+heard;const t=$('#saytxt');if(t)t.value=SY.text;done=[...e.results].every(x=>x.isFinal)};
   r.onerror=e=>{const m=$('#saymsg');if(m)m.textContent=e.error==='not-allowed'||e.error==='service-not-allowed'?'The microphone is blocked for this app. Allow it in Chrome\'s site settings, or type instead.':e.error==='network'?'The mic needs signal. You can type instead.':e.error==='no-speech'?'Didn\'t hear anything. Tap to try again.':'The mic stopped. Tap to try again, or type.'};
-  r.onend=()=>{REC=null;micShow();if(heard&&STACK[STACK.length-1]===sheetSay)sayNext()};
+  r.onend=()=>{const manual=r._manual;REC=null;micShow();if(heard&&!manual&&STACK[STACK.length-1]===sheetSay)sayNext()};
   try{r.start();REC=r}catch(e){REC=null}
   micShow();
 }
-function micStop(){if(REC){const r=REC;REC=null;try{r.stop()}catch(e){}micShow()}}
+function micStop(){if(REC){const r=REC;r._manual=true;REC=null;try{r.stop()}catch(e){}micShow()}}
 function sayNext(){
   micStop();const txt=(SY.text||'').trim();if(!txt)return toast('Say or type what you had');
   const p=FLSay.parse(txt,view().foods,ALIAS,mealNow());
@@ -816,7 +816,7 @@ function setRowFood(r,f){
   if(r.key&&!String(f.id).startsWith('tmp')){ALIAS[r.key]=f.id;ls.set('fl_alias',ALIAS)} // remember: next time this phrase means this food
 }
 function sayLog(){
-  if(!syOk())return;
+  if(!SY||!syOk())return;
   const meal=SY.meal,cids=[];
   for(const r of SY.rows){const cid=newCid();cids.push(cid);submit({action:'add',cid,date:S.date,meal,foodId:r.food.id,qty:r2(r.qty)})}
   const n=cids.length;SY=null;closeAll();if(navigator.vibrate)navigator.vibrate(8);
