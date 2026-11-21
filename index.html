@@ -93,6 +93,8 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .rl{font-size:12px;font-weight:600;color:var(--dim)}
 .rs{font-size:11.5px;font-weight:700;color:var(--dim);min-height:16px}
 .rings.grow .arc{animation:ringIn .9s cubic-bezier(.2,.8,.2,1) both}
+.rings.grow .tip{animation:tipIn .9s step-end both}
+@keyframes tipIn{from{opacity:0}}
 @keyframes ringIn{from{stroke-dasharray:0 200}}
 .sk{display:inline-block;height:9px;border-radius:5px;background:var(--line);vertical-align:middle;animation:shim 1.2s ease-in-out infinite}
 @keyframes shim{50%{opacity:.45}}
@@ -100,7 +102,19 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .sum{font-size:13px;color:var(--dim);margin-bottom:2px}
 .sum b{color:var(--text);font-size:22px;font-weight:700}
 .chips.four .chip{font-size:13px;padding:10px 0}
-.src{padding:9px 0;border-bottom:1px solid var(--line)}
+.src{padding:10px 12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px}
+.fgroup .src:first-child{border-top:0}
+.src .sb{flex:1;min-width:0}
+.src .n div{font-weight:600}
+.hero{display:flex;align-items:center;gap:18px;background:var(--card);border-radius:18px;padding:16px;margin-top:2px}
+.hring{position:relative;width:120px;height:120px;flex:none}
+.hring svg{display:block}
+.hring span{position:absolute;inset:0;display:grid;place-content:center;text-align:center}
+.hring b{font-size:22px;font-weight:800;display:block}
+.hring small{font-size:11.5px;color:var(--dim)}
+.hbig{font-size:30px;font-weight:800;letter-spacing:-.5px}
+.hof{font-size:13px;color:var(--dim)}
+.hleft{font-size:13px;font-weight:700;margin-top:6px}
 .src .v{text-align:right;font-size:13px;color:var(--dim);white-space:nowrap}
 .src .v b{color:var(--text);font-weight:600}
 .share{height:4px;border-radius:2px;background:var(--card2);margin-top:6px;overflow:hidden}
@@ -156,7 +170,24 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .frow{padding:0 2px;border-bottom:1px solid var(--line);min-height:56px}
 .frow .n{padding:9px 0;text-align:left}
 .frow .plus{height:44px;border-radius:22px;background:var(--card2);color:var(--text)}
-.sec{font-size:12px;color:var(--dim);font-weight:600;margin:14px 0 2px}
+.sec{font-size:12px;color:var(--dim);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin:16px 4px 0}
+/* round 2: food tiles, grouped cards, search with an icon, meal chips */
+.ftile{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;font-weight:800;font-size:15px;flex:none;background:color-mix(in srgb,var(--tc) var(--tint),transparent);color:color-mix(in srgb,var(--tc) 70%,var(--text))}
+.fgroup{background:var(--card);border-radius:16px;overflow:hidden;margin-top:6px}
+.fgroup .frow{border-bottom:0;border-top:1px solid var(--line);padding:0 10px 0 12px;gap:12px;min-height:58px}
+.fgroup .frow:first-child{border-top:0}
+.fgroup .frow .n div{font-weight:600;font-size:14.5px}
+.fgroup .frow small{font-size:12.5px}
+.fgroup .frow .plus{width:40px;height:40px;border-radius:20px}
+.sbox{position:relative}.sbox>svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--faint);pointer-events:none}
+.sbox .search{padding-left:42px;border-radius:14px;height:48px;border-color:transparent}
+.mchips{display:flex;gap:6px;margin:10px 0 0;overflow-x:auto;scrollbar-width:none}
+.mchip{padding:9px 14px;border-radius:18px;background:var(--card);color:var(--dim);font-size:13px;font-weight:600;flex:none;min-height:38px}
+.mchip.on{background:var(--acc);color:var(--onacc)}
+.seg{display:flex;background:var(--card2);border-radius:12px;padding:3px;margin:12px 0}
+.segb{flex:1;padding:9px 0;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--dim)}
+.segb.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+[data-mode=dark] .segb.on{background:#343844;box-shadow:none}
 .added{display:flex;gap:8px;align-items:center;margin-top:10px;overflow-x:auto;scrollbar-width:none}
 .added span{font-size:12px;color:var(--dim);flex:none}
 .pill{background:var(--card2);color:var(--text);font-size:13px;font-weight:600;padding:8px 12px;border-radius:18px;white-space:nowrap;flex:none}
@@ -164,14 +195,20 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .chips{display:flex;gap:8px;margin:12px 0}
 .chip{flex:1;padding:11px 0;border-radius:12px;background:var(--card);color:var(--dim);font-weight:600}
 .chip.on{background:var(--acc);color:var(--onacc)}
-.qty{display:flex;align-items:center;gap:8px;margin:12px 0}
-.qty input{flex:1;font-size:28px;font-weight:600;padding:10px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;min-width:0}
-.qty span{color:var(--dim);font-size:16px;min-width:40px}
-.step{touch-action:none;width:48px;height:56px;border-radius:12px;background:var(--card);font-size:22px;color:var(--dim);flex:none}
+.qty{display:flex;align-items:center;gap:10px;margin:12px 0}
+.qbox{flex:1;min-width:0;height:62px;display:flex;align-items:center;gap:6px;background:var(--card);border-radius:16px;box-shadow:inset 0 0 0 2px var(--line)}
+.qbox:focus-within{box-shadow:inset 0 0 0 2px var(--acc)}
+.qbox input{flex:1;min-width:0;width:0;text-align:right;border:0;background:none;font-size:30px;font-weight:800;letter-spacing:-.5px;padding:0;outline:none}
+.qbox span{flex:1;min-width:0;color:var(--dim);font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step{touch-action:none;width:52px;height:62px;border-radius:16px;background:var(--card);font-size:24px;color:var(--dim);flex:none}
 .macros{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:8px 0 14px}
-.macros div{background:var(--card);border-radius:12px;padding:8px;text-align:center}
-.macros b{display:block;font-size:17px}
-.macros small{color:var(--faint);font-size:11px}
+.macros div{background:var(--card);border-radius:14px;padding:10px 6px 9px;text-align:center}
+.macros i{display:block;width:18px;height:4px;border-radius:2px;background:var(--mc);margin:0 auto 6px}
+.macros b{display:block;font-size:18px;font-weight:800}
+.macros small{color:var(--dim);font-size:11.5px}
+.mealc{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 0 8px;font-size:12.5px;font-weight:700}
+.mealc svg{width:20px;height:20px}
+.mealc.on{background:color-mix(in srgb,var(--mc) var(--tint),transparent);color:color-mix(in srgb,var(--mc) 72%,var(--text));box-shadow:inset 0 0 0 1.5px var(--mc)}
 .primary{width:100%;padding:14px;border-radius:14px;background:var(--acc);color:var(--onacc);font-weight:700;font-size:16px}
 .primary:disabled{opacity:.4}
 .secondary{display:block;width:100%;padding:12px;border-radius:14px;background:var(--card);color:var(--text);font-weight:600;margin-top:8px;text-align:center;text-decoration:none}
@@ -182,6 +219,13 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 .hint{font-size:12px;color:var(--faint);margin-top:4px}
 .seth{font-size:15px;margin:26px 0 10px}
+.grow{display:flex;align-items:center;gap:12px;padding:0 14px;min-height:54px;border-top:1px solid var(--line)}
+.grow:first-child{border-top:0}
+.grow i{width:10px;height:10px;border-radius:5px;flex:none}
+.form .grow label{flex:1;margin:0;font-size:15px;font-weight:600;color:var(--text)}
+.grow input{width:96px;text-align:right;border:0;background:none;font-size:16px;font-weight:800;outline:none;padding:12px 0}
+.grow input:focus{color:var(--acc)}
+.grow em{font-style:normal;color:var(--dim);font-size:13px;width:30px}
 .swatches{display:flex;gap:12px}
 .sw{width:44px;height:44px;border-radius:22px;box-shadow:inset 0 0 0 1px rgba(127,127,127,.25);display:grid;place-items:center}
 .sw[aria-checked=true]{box-shadow:0 0 0 3px var(--bg),0 0 0 5px var(--text)}
@@ -236,7 +280,7 @@ input[type=number]{-moz-appearance:textfield}
 .sayrow .note{font-size:12px;color:var(--warn);margin-top:4px}
 .saytot{font-size:13px;color:var(--dim);margin:12px 2px}
 .saytot b{color:var(--text)}
-@media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}.rings.grow .arc,.sk{animation:none!important}}
+@media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}.rings.grow .arc,.rings.grow .tip,.sk{animation:none!important}}
 </style>
 </head>
 <body>
@@ -245,7 +289,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='25';
+const APP_VERSION='26';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -256,7 +300,8 @@ const svg=(d,n)=>`<svg aria-hidden="true" width="${n||20}" height="${n||20}" vie
 const IC={left:svg('<path d="M15 6l-6 6 6 6"/>'),right:svg('<path d="M9 6l6 6-6 6"/>'),x:svg('<path d="M6 6l12 12M18 6L6 18"/>',18),plus:svg('<path d="M12 5v14M5 12h14"/>'),
   gear:svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>'),chev:svg('<path d="M6 9l6 6 6-6"/>',18),
   cam:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),
-  mic:svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>')};
+  mic:svg('<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>'),
+  search:svg('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',18)};
 const MI={breakfast:svg('<path d="M4 18h16M7 18a5 5 0 0 1 10 0M12 9V6M5.6 11.6 4.2 10.2M18.4 11.6l1.4-1.4"/>',22),
   lunch:svg('<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6 7 7M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>',22),
   dinner:svg('<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',22),
@@ -435,10 +480,13 @@ const RING=2*Math.PI*31; // length of a ring's circle
 // a ring's filled arc; past 100% a second lap in a darker shade, with a shadow, shows how far over (capped at 200%)
 function arcs(c,R,sw,col,ratio){
   if(!(ratio>0))return '';
-  const C=2*Math.PI*R,one=(len,st)=>`<circle class="arc" cx="${c}" cy="${c}" r="${R}" fill="none" style="stroke:${st.col};${st.sh||''}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${Math.max(0.1,len).toFixed(1)} ${C.toFixed(1)}" transform="rotate(-90 ${c} ${c})"/>`;
-  let h=one(C*Math.min(1,ratio),{col});
-  if(ratio>1.005)h+=one(C*Math.min(1,ratio-1),{col:`color-mix(in srgb,${col} 62%,#000)`,sh:'filter:drop-shadow(0 0 1.5px rgba(0,0,0,.55))'});
-  return h;
+  const C=2*Math.PI*R,r=Math.min(ratio,2),T=`transform="rotate(-90 ${c} ${c})"`;
+  const arc=(len,st,cap)=>`<circle class="arc" cx="${c}" cy="${c}" r="${R}" fill="none" style="stroke:${st}" stroke-width="${sw}" stroke-linecap="${cap}" stroke-dasharray="${Math.max(0.1,len).toFixed(1)} ${C.toFixed(1)}" ${T}/>`;
+  if(r<=1.005)return arc(C*Math.min(1,r),col,'round');
+  // past the goal it reads as one ring carrying on round: a full lap, then the overlap in a slightly darker shade of the
+  // same colour (no shadow, no seam at the top), ending in a rounded tip; it stops at twice the goal
+  const dark=`color-mix(in srgb,${col} 84%,#000)`,a=(r-1)*2*Math.PI;
+  return arc(C,col,'butt')+arc(C*(r-1),dark,'butt')+`<circle class="tip" cx="${(c+R*Math.sin(a)).toFixed(2)}" cy="${(c-R*Math.cos(a)).toFixed(2)}" r="${sw/2}" style="fill:${dark}"/>`;
 }
 function totals(es){const t={kcal:0,fat:0,protein:0,net:0};es.forEach(e=>MKEYS.forEach(m=>t[m]+=e[m]));return t}
 // the header dot: green = all in the sheet, grey = saving or checking, amber = waiting for signal, red = needs you
@@ -611,7 +659,9 @@ const usualQty=f=>f.defQty||(f.unit==='serving'?1:100);
 const norm=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); // so "espanola" finds "Española"
 function openAdd(meal){AD={meal:meal||mealNow(),q:'',added:[]};nav(sheetAdd)}
 function sheetAdd(){
-  sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${mealName(AD.meal)}${S.date===today()?'':' · '+nice(S.date)}</h3><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><input class="search" id="q" placeholder="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"><div id="added"></div><div id="flist"></div></div>`;
+  sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${mealName(AD.meal)}${S.date===today()?'':' · '+nice(S.date)}</h3><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><div class="sbox">${IC.search}<input class="search" id="q" placeholder="Search your foods" aria-label="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"></div>
+  <div class="mchips" role="radiogroup" aria-label="Meal">${MEALS.map(([m,l])=>`<button class="mchip ${m===AD.meal?'on':''}" role="radio" aria-checked="${m===AD.meal}" data-act="adMeal" data-m="${m}">${l==='Snacks'?'Snack':l}</button>`).join('')}</div>
+  <div id="added"></div><div id="flist"></div></div>`;
   $('#q').addEventListener('input',e=>{AD.q=e.target.value;listFoods()});
   listFoods();
 }
@@ -627,7 +677,7 @@ function listFoods(){
   let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
   // then near misses: typos ("avacado") and everyday names ("almond milk"), after the exact matches
   const close=words.length&&window.FLSay?FLSay.search(AD.q,v.foods).filter(f=>!fs.includes(f)):[];
-  const row=f=>{const q=usualQty(f),k=q/f.per;return `<div class="row frow"><button class="n" data-act="pick" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${fmt(q)} ${esc(f.label)} · ${r0(f.kcal*k)} kcal · ${fmt(f.net*k)} g net</small></button><button class="plus" aria-label="Add ${fmt(q)} ${esc(f.label)} of ${esc(f.name)}" data-act="quick" data-id="${esc(f.id)}">${IC.plus}</button></div>`};
+  const row=f=>{const q=usualQty(f),k=q/f.per;return `<div class="row frow">${tileOf(f)}<button class="n" data-act="pick" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${fmt(q)} ${esc(f.label)} · ${r0(f.kcal*k)} kcal · ${fmt(f.net*k)} g net</small></button><button class="plus" aria-label="Add ${fmt(q)} ${esc(f.label)} of ${esc(f.name)}" data-act="quick" data-id="${esc(f.id)}">${IC.plus}</button></div>`};
   const mine=v.entries.filter(e=>AD.added.includes(e.id));
   $('#added').innerHTML=mine.length?`<div class="added"><span>Added</span>${mine.map(e=>`<button class="pill" data-act="entry" data-id="${esc(e.id)}">${esc(cut(e.food,18))} · ${fmt(e.qty)} ${esc(e.unit)}</button>`).join('')}</div>`:'';
   let usual=[];
@@ -635,9 +685,12 @@ function listFoods(){
     usual=fs.filter(f=>n[f.id]>=2&&!here.has(f.id)).sort((a,b)=>n[b.id]-n[a.id]).slice(0,3)}
   const rest=fs.filter(f=>!usual.includes(f));
   $('#flist').innerHTML=!fs.length&&!close.length?`<div class="empty" style="padding:16px 0">No match. <button class="link" data-act="newFood">Create "${esc(AD.q)}"</button></div>`
-    :(usual.length?`<div class="sec">Usual for ${mealName(AD.meal)}</div>${usual.map(row).join('')}<div class="sec">All foods, most used first</div>`:'')+rest.map(row).join('')
-    +(close.length?(fs.length?'<div class="sec">Close matches</div>':'')+close.map(row).join(''):'');
+    :(usual.length?`<div class="sec">Usual for ${mealName(AD.meal)}</div><div class="fgroup">${usual.map(row).join('')}</div><div class="sec">All foods, most used first</div>`:'')+(rest.length?`<div class="fgroup">${rest.map(row).join('')}</div>`:'')
+    +(close.length?(fs.length?'<div class="sec">Close matches</div>':'')+`<div class="fgroup">${close.map(row).join('')}</div>`:'');
 }
+// a food's tile: its first letter, tinted by what most of its calories come from (fat green, protein blue, carbs orange)
+function tileOf(f){const kf=(f.fat||0)*9,kp=(f.protein||0)*4,kn=(f.net||0)*4,c=!(kf+kp+kn)?'--dim':kp>kf&&kp>=kn?'--pro':kn>kf&&kn>kp?'--net':'--fat';
+  return `<span class="ftile" aria-hidden="true" style="--tc:var(${c})">${esc(((f.name||'').match(/[A-Za-z0-9]/)||['?'])[0].toUpperCase())}</span>`}
 // one tap: log the usual amount and stay in the list
 function logFood(f,qty,meal){
   const cid=newCid();AD.added.push(cid);
@@ -672,9 +725,9 @@ function sheetAmount(){
   const unit=e?e.unit:f.label;
   sheetEl.innerHTML=head(esc(e?e.food:f.name))+`<div class="sh-body">
   ${f?`<div class="hint">${perText(f)}: ${r0(f.kcal)} kcal · fat ${fmt(f.fat)} · protein ${fmt(f.protein)} · net ${fmt(f.net)} g</div>`:''}
-  <div class="qty"><button class="step" aria-label="1 ${esc(unit)} less" data-n="-1">−</button><input id="qty" type="number" inputmode="decimal" step="any" min="0" enterkeyhint="done" aria-label="Amount" value="${AM.qty}"><span>${esc(unit)}</span><button class="step" aria-label="1 ${esc(unit)} more" data-n="1">+</button></div>
+  <div class="qty"><button class="step" aria-label="1 ${esc(unit)} less" data-n="-1">−</button><div class="qbox"><input id="qty" type="number" inputmode="decimal" step="any" min="0" enterkeyhint="done" aria-label="Amount in ${esc(unit)}" value="${AM.qty}"><span>${esc(unit)}</span></div><button class="step" aria-label="1 ${esc(unit)} more" data-n="1">+</button></div>
   <div class="macros" id="amm"></div>
-  <div class="chips four">${MEALS.map(([m,l])=>`<button class="chip ${m===AM.meal?'on':''}" data-act="meal" data-m="${m}">${l}</button>`).join('')}</div>
+  <div class="chips four">${MEALS.map(([m,l])=>`<button class="chip mealc ${m===AM.meal?'on':''}" style="--mc:var(--m-${m})" data-act="meal" data-m="${m}" aria-pressed="${m===AM.meal}">${MI[m]}<span>${l==='Snacks'?'Snack':l}</span></button>`).join('')}</div>
   <button class="primary" id="amgo" data-act="amSave">${e?'Save':'Add'}</button>
   ${e?`<button class="secondary danger" data-act="amDelete">Delete entry</button>`
      :`<div class="links"><button class="link" data-act="editFood">Edit food</button><button class="link danger" data-act="hideFood">Remove from list</button></div>`}
@@ -691,7 +744,7 @@ function amMacros(){
   if(e){const k=AM.qty/(e.qty||1);m={kcal:e.kcal*k,fat:e.fat*k,protein:e.protein*k,net:e.net*k}}
   else if(f){const k=AM.qty/f.per;m={kcal:f.kcal*k,fat:f.fat*k,protein:f.protein*k,net:f.net*k}}
   else return;
-  $('#amm').innerHTML=`<div><b>${r0(m.kcal)}</b><small>kcal</small></div><div><b>${fmt(m.net)}</b><small>net carbs</small></div><div><b>${fmt(m.protein)}</b><small>protein</small></div><div><b>${fmt(m.fat)}</b><small>fat</small></div>`;
+  $('#amm').innerHTML=`<div style="--mc:var(--kcal)"><i></i><b>${r0(m.kcal)}</b><small>kcal</small></div><div style="--mc:var(--net)"><i></i><b>${fmt(m.net)}</b><small>net carbs</small></div><div style="--mc:var(--pro)"><i></i><b>${fmt(m.protein)}</b><small>protein</small></div><div style="--mc:var(--fat)"><i></i><b>${fmt(m.fat)}</b><small>fat</small></div>`;
   $('#amgo').disabled=!(AM.qty>0);
 }
 function bump(n){AM.qty=Math.max(0,r2((AM.qty||0)+n));$('#qty').value=AM.qty;amMacros()}
@@ -969,9 +1022,10 @@ function sheetRing(){
   const rows=Object.values(by).filter(x=>x.val>=0.05).sort((a,b)=>b.val-a.val),top=rows.length?rows[0].val:1,over=goal&&tot>goal+0.05;
   const left=!goal?'no goal set':over?fmt(tot-goal)+un+' over':fmt(goal-tot)+un+' left';
   sheetEl.innerHTML=head(label+(S.date===today()?' today':' · '+nice(S.date)))+`<div class="sh-body">
-  <div class="sum"><b>${fmt(tot)}</b> of ${goal?fmt(goal):'–'}${un} · <span class="${over&&cap?'danger':''}">${left}</span></div>
-  <div class="chips four">${MACROS.map(m=>`<button class="chip ${m[0]===k?'on':''}" data-act="ringK" data-k="${m[0]}">${m[1]}</button>`).join('')}</div>
-  ${rows.length?rows.map(x=>`<div class="src"><div class="row"><div class="n"><div>${esc(x.name)}</div><small>${fmt(x.qty)} ${esc(x.unit)}${x.n>1?' · '+x.n+' entries':''}</small></div><div class="v"><b>${fmt(x.val)}</b>${un}<br>${tot?r0(x.val/tot*100):0}%</div></div><div class="share"><i style="width:${x.val/top*100}%;background:${col}"></i></div></div>`).join('')
+  <div class="hero"><div class="hring"><svg width="120" height="120" viewBox="0 0 120 120" aria-hidden="true"><circle cx="60" cy="60" r="52" fill="none" style="stroke:${tint(col)}" stroke-width="14"/>${goal?arcs(60,52,14,over&&cap?'var(--bad)':col,tot/goal):''}</svg><span>${goal?`<b>${r0(tot/goal*100)}%</b><small>of goal</small>`:''}</span></div>
+  <div><div class="hbig">${fmt(tot)}</div><div class="hof">of ${goal?fmt(goal):'–'}${un}</div><div class="hleft ${over&&cap?'danger':''}" style="${over&&cap?'':`color:color-mix(in srgb,${col} 70%,var(--text))`}">${left}</div></div></div>
+  <div class="seg" role="tablist">${MACROS.map(m=>`<button class="segb ${m[0]===k?'on':''}" role="tab" aria-selected="${m[0]===k}" data-act="ringK" data-k="${m[0]}">${m[1]}</button>`).join('')}</div>
+  ${rows.length?`<div class="fgroup">${rows.map(x=>{const f=view().foods.find(ff=>ff.name===x.name);return `<div class="src">${f?tileOf(f):tileOf({name:x.name})}<div class="sb"><div class="row"><div class="n"><div>${esc(x.name)}</div><small>${fmt(x.qty)} ${esc(x.unit)}${x.n>1?' · '+x.n+' entries':''}</small></div><div class="v"><b>${fmt(x.val)}</b>${un}<br>${tot?r0(x.val/tot*100):0}%</div></div><div class="share"><i style="width:${x.val/top*100}%;background:${col}"></i></div></div></div>`}).join('')}</div>`
     :`<div class="empty" style="padding:16px 0">${v.entries.length?'Nothing you\'ve logged has any.':'Nothing logged yet.'}</div>`}
   </div>`;
 }
@@ -980,15 +1034,15 @@ function sheetRing(){
 function sheetGoals(){
   const v=view(),g=v.goals||{};
   sheetEl.innerHTML=head('Goals and settings')+`<div class="sh-body form">
-  <div class="grid2"><div><label for="g_kcal">Calories (kcal)</label><input class="inp" id="g_kcal" inputmode="decimal" value="${g.kcal??''}"></div><div><label for="g_net">Net carbs (g)</label><input class="inp" id="g_net" inputmode="decimal" value="${g.net??''}"></div>
-  <div><label for="g_protein">Protein (g)</label><input class="inp" id="g_protein" inputmode="decimal" value="${g.protein??''}"></div><div><label for="g_fat">Fat (g)</label><input class="inp" id="g_fat" inputmode="decimal" value="${g.fat??''}"></div></div>
-  <div class="hint">Changing protein, net carbs or fat updates calories for you (4 kcal per g of protein or carbs, 9 per g of fat). You can still type calories yourself.</div>
-  <div class="hint">New goals apply from today on; past days keep the goals they had.</div>
+  <div class="sec" style="margin-top:4px">Daily goals</div>
+  <div class="fgroup">${[['kcal','Calories','kcal','--kcal'],['net','Net carbs','g','--net'],['protein','Protein','g','--pro'],['fat','Fat','g','--fat']].map(([k,l,u,c])=>`<div class="grow"><i style="background:var(${c})"></i><label for="g_${k}">${l}</label><input id="g_${k}" inputmode="decimal" value="${g[k]??''}"><em>${u}</em></div>`).join('')}</div>
+  <div class="hint" style="margin:8px 4px 0">Change protein, net carbs or fat and calories follow (4 kcal per g of protein or carbs, 9 per g of fat); you can still type calories yourself. New goals start today; past days keep theirs.</div>
   <div style="height:14px"></div><button class="primary" data-act="saveGoals">Save goals</button>
-  <h4 class="seth">App colours</h4>
+  <div class="sec" style="margin-top:24px">Appearance</div>
+  <div class="fgroup" style="padding:14px">
   <div class="swatches" role="radiogroup" aria-label="Colour">${BANDS.map(([b,l,c])=>`<button class="sw" role="radio" aria-checked="${TH.band===b}" aria-label="${l}" data-act="band" data-b="${b}" style="background:${c}"></button>`).join('')}<button class="sw swc" role="radio" aria-checked="${TH.band==='custom'}" aria-label="Any colour" data-act="band" data-b="custom"></button></div>
   <div id="cwp"></div>
-  <div class="chips" role="radiogroup" aria-label="Light or dark">${[['light','Light'],['dark','Dark'],['auto','Match phone']].map(([m,l])=>`<button class="chip ${TH.mode===m?'on':''}" role="radio" aria-checked="${TH.mode===m}" data-act="mode" data-m="${m}">${l}</button>`).join('')}</div>
+  <div class="seg" style="margin-bottom:0" role="radiogroup" aria-label="Light or dark">${[['light','Light'],['dark','Dark'],['auto','Match phone']].map(([m,l])=>`<button class="segb ${TH.mode===m?'on':''}" role="radio" aria-checked="${TH.mode===m}" data-act="mode" data-m="${m}">${l}</button>`).join('')}</div></div>
   ${v.sheetUrl?`<a class="secondary" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener">Open the sheet (export from there)</a>`:''}
   <div class="hint" style="text-align:center;margin-top:14px">Food Log v${APP_VERSION}</div></div>`;
   if(TH.band==='custom')wheel($('#cwp'));
@@ -1064,7 +1118,8 @@ const ACT={
   day:d=>go(Number(d.n)),today:goToday,goals:()=>nav(sheetGoals),add:d=>openAdd(d.meal),entry:d=>openEntry(d.id),
   ring:d=>{RG={k:d.k};nav(sheetRing)},fold:d=>fold(d.meal),again,group:d=>{GP={meal:d.meal,fid:d.fid};nav(sheetGroup)},ringK:d=>{RG.k=d.k;sheetRing()},
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
-meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
+meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('[data-act=meal]').forEach(c=>{const on=c.dataset.m===d.m;c.classList.toggle('on',on);c.setAttribute('aria-pressed',on)})},
+  adMeal:d=>{AD.meal=d.m;sheetAdd()},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
   ffUnit:d=>ffUnit(d.u),ffSave,say:openSay,refresh:()=>{load();flush(true)},mic:()=>REC?micStop():micStart(),sayNext,sayLog,
   sayMeal:d=>{SY.meal=d.m;sheetEl.querySelectorAll('[data-act=sayMeal]').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m));sayRefresh()},
