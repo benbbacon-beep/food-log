@@ -235,7 +235,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='23';
+const APP_VERSION='24';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -283,7 +283,7 @@ const realId=id=>IDMAP[id]||id;
 
 const newCid=()=>'e'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 function apiErr(kind,msg){const e=new Error(msg);e.kind=kind;return e}
-async function api(body,ms){
+async function api(body,ms,batch){
   const ctl=new AbortController(),t=setTimeout(()=>ctl.abort(),ms||25000);
   let r;
   try{r=await fetch(CFG.url,{method:'POST',body:JSON.stringify(Object.assign({key:CFG.key},body)),redirect:'follow',signal:ctl.signal})}
@@ -291,7 +291,7 @@ async function api(body,ms){
   finally{clearTimeout(t)}
   let j;
   try{j=await r.json()}catch(e){throw apiErr('google','Google returned an error page')}
-  if(j.error)throw apiErr('server',j.error);
+  if(j.error&&!(batch&&Array.isArray(j.results)))throw apiErr('server',j.error); // a batch that stopped part-way still says what it did
   return j;
 }
 
@@ -314,7 +314,7 @@ async function load(quiet){
     const j=await api({action:'state',date});
     if(seq!==S.seq)return;
     if(w!==WRITES){if(!flushing)load(true);return} // a change landed while this was on its way: it's out of date, ask again
-    S.data=j;S.error=null;S.badKey=false;remember(j);
+    S.data=j;S.error=null;S.badKey=false;remember(j);syncAliases(j.aliases);
   }catch(e){
     if(seq!==S.seq)return;
     S.error=e.kind==='offline'?'offline':e.message;
@@ -351,37 +351,50 @@ function view(){
 // ---------- send queue ----------
 const UNDO_MS=6000; // deletes wait this long before they're sent, so Undo is a true undo
 const PERMANENT=/^(Food not found|Bad |Amount must|Food needs|Unknown action)/;
-let flushing=false,inFlight=null,retryAt=0,WRITES=0; // WRITES counts changes the sheet has confirmed
-function submit(job){if(job.meal&&FOLD[job.meal]&&(job.action==='add'||job.action==='edit')){FOLD[job.meal]=false;ls.set('fl_fold',FOLD)}job.qid=Date.now()+'-'+Math.random().toString(36).slice(2,8);Q.push(job);saveQ();render();flush(true);if(job.after)setTimeout(()=>flush(true),job.after-Date.now()+50)}
-const unsend=job=>{if(inFlight===job.qid||!Q.some(j=>j.qid===job.qid))return false;Q=Q.filter(j=>j.qid!==job.qid);saveQ();render();return true};
+let flushing=false,retryAt=0,WRITES=0,NOBATCH=false;const INFLIGHT=new Set(); // WRITES counts changes the sheet has confirmed
+function submit(job){if(job.meal&&FOLD[job.meal]&&(job.action==='add'||job.action==='edit')){FOLD[job.meal]=false;ls.set('fl_fold',FOLD)}job.qid=Date.now()+'-'+Math.random().toString(36).slice(2,8);Q.push(job);saveQ();render();setTimeout(()=>flush(true),120);if(job.after)setTimeout(()=>flush(true),job.after-Date.now()+50)}
+const unsend=job=>{if(INFLIGHT.has(job.qid)||!Q.some(j=>j.qid===job.qid))return false;Q=Q.filter(j=>j.qid!==job.qid);saveQ();render();return true};
+const BATCH_MAX=20; // changes sent together in one trip
+function bodyOf(j){
+  if(j.foodId)j.foodId=realId(j.foodId);
+  if(j.food&&j.food.id)j.food.id=realId(j.food.id);
+  const body=Object.assign({},j);delete body.qid;delete body.tmpFood;delete body.held;delete body.tries;delete body.after;
+  if(j.action==='hideFood')body.id=realId(j.id);
+  return body;
+}
 async function flush(force){
   if(flushing||!CFG||S.badKey)return;
   if(!force&&Date.now()<retryAt)return;
   flushing=true;let changed=false;if(Q.some(x=>!x.held))render(); // the header dot shows it's saving
+  const drop=j=>{Q=Q.filter(x=>x.qid!==j.qid);saveQ();changed=true;WRITES++};
   try{
     for(;;){
-      const now=Date.now(),j=Q.find(x=>!x.held&&!(x.after>now));if(!j)break;
-      if(j.foodId)j.foodId=realId(j.foodId);
-      if(j.food&&j.food.id)j.food.id=realId(j.food.id);
-      const body=Object.assign({},j);delete body.qid;delete body.tmpFood;delete body.held;delete body.tries;delete body.after;
-      if(j.action==='hideFood')body.id=realId(j.id);
-      inFlight=j.qid;
-      let res,err;try{res=await api(body)}catch(e){err=e}
-      inFlight=null;
-      const drop=()=>{Q=Q.filter(x=>x.qid!==j.qid);saveQ();changed=true;WRITES++};
-      if(!err){
+      const now=Date.now(),ready=Q.filter(x=>!x.held&&!(x.after>now));if(!ready.length)break;
+      // everything waiting goes in one trip, in order; a new food ends its group, as later changes may need its real id
+      const group=[];for(const j of ready){group.push(j);if(NOBATCH||j.action==='saveFood'||group.length>=BATCH_MAX)break}
+      const bodies=group.map(bodyOf);
+      group.forEach(j=>INFLIGHT.add(j.qid));
+      let results=[],err=null,whole=false;
+      try{
+        if(group.length===1)results=[await api(bodies[0])];
+        else{const r=await api({action:'batch',jobs:bodies},Math.min(60000,25000+1500*group.length),true);results=r.results;if(r.error)err=apiErr('server',r.error)}
+      }catch(e){err=e;whole=true}
+      finally{INFLIGHT.clear()}
+      results.forEach((res,i)=>{const j=group[i];
         if(j.action==='saveFood'&&j.tmpFood&&res.food&&j.tmpFood.id!==res.food.id){IDMAP[j.tmpFood.id]=res.food.id;ls.set('fl_idmap',IDMAP)}
         if(S.data)applyJob(S.data,j,res);
-        drop();retryAt=0;continue;
-      }
+        drop(j)});
+      if(!err){retryAt=0;continue}
+      const j=group[results.length]; // the change that didn't go through (the rest of the group is resent next time round)
       if(err.kind!=='server'){retryAt=Date.now()+10000;break}       // no signal / Google hiccup: keep everything, try again later
       if(err.message==='Wrong key'){S.badKey=true;break}             // keep everything until the phone is re-linked
-      if(/^Entry not found/.test(err.message)){drop();continue}      // editing something already deleted: nothing to do
+      if(whole&&group.length>1&&err.message==='Unknown action'){NOBATCH=true;continue} // an older sheet API: send them one at a time
+      if(/^Entry not found/.test(err.message)){drop(j);continue}     // editing something already deleted: nothing to do
       j.tries=(j.tries||0)+1;
       if(PERMANENT.test(err.message)||j.tries>=4){j.held=err.message;saveQ();continue} // park it and let the user decide
       saveQ();retryAt=Date.now()+15000;break;                        // e.g. the sheet was busy: retry
     }
-  }finally{flushing=false;inFlight=null}
+  }finally{flushing=false;INFLIGHT.clear()}
   if(changed&&S.data&&!S.data.partial)remember(S.data); // so a confirmed entry is still there if the next refresh fails
   if(changed)load(true);else render();
 }
@@ -699,9 +712,9 @@ function amDelete(){
   AD.added=AD.added.filter(x=>x!==e.id);
   // not sent yet? then just cancel it rather than sending an add followed by a delete
   const mine=j=>(j.action==='add'&&j.cid===e.id)||(j.action==='edit'&&j.id===e.id);
-  const unsentAdd=Q.find(j=>j.action==='add'&&j.cid===e.id&&j.qid!==inFlight);
+  const unsentAdd=Q.find(j=>j.action==='add'&&j.cid===e.id&&!INFLIGHT.has(j.qid));
   let undo;
-  if(unsentAdd&&!Q.some(j=>mine(j)&&j.qid===inFlight)){
+  if(unsentAdd&&!Q.some(j=>mine(j)&&INFLIGHT.has(j.qid))){
     const removed=Q.filter(mine);Q=Q.filter(j=>!mine(j));saveQ();render();
     undo=()=>{removed.forEach(j=>{delete j.held;delete j.tries;Q.push(j)});saveQ();render();flush(true)};
   }else{
@@ -751,6 +764,15 @@ function ffRegion(r){
 let SY=null,REC=null;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
 const ALIAS=ls.get('fl_alias',{}); // phrases he's taught it: "almond milk" -> f002
+// The sheet keeps a backup (Aliases tab). Phone and sheet are kept the same: phrases missing here come back from the sheet
+// (e.g. after Chrome's data is cleared); phrases the sheet lacks or has differently are sent up.
+function syncAliases(srv){
+  if(!srv||typeof srv!=='object'||Q.some(j=>j.action==='saveAliases'))return;
+  let got=false;for(const k in srv)if(!(k in ALIAS)){ALIAS[k]=srv[k];got=true}
+  if(got)ls.set('fl_alias',ALIAS);
+  const up={};for(const k in ALIAS)if(srv[k]!==ALIAS[k])up[k]=ALIAS[k];
+  if(Object.keys(up).length)submit({action:'saveAliases',map:up});
+}
 function openSay(){SY={text:'',meal:mealNow(),rows:[]};nav(sheetSay);if(SR)micStart()}
 function sheetSay(){
   sheetEl.innerHTML=head('What did you have?')+`<div class="sh-body">
@@ -827,7 +849,7 @@ function sayChoose(id){
 }
 function setRowFood(r,f){
   r.food=f;r.sure=true;FLSay.amount(r);
-  if(r.key&&!String(f.id).startsWith('tmp')){ALIAS[r.key]=f.id;ls.set('fl_alias',ALIAS)} // remember: next time this phrase means this food
+  if(r.key&&!String(f.id).startsWith('tmp')&&ALIAS[r.key]!==f.id){ALIAS[r.key]=f.id;ls.set('fl_alias',ALIAS);submit({action:'saveAliases',map:{[r.key]:f.id}})} // remember: next time this phrase means this food (and back it up to the sheet)
 }
 function sayLog(){
   if(!SY||!syOk())return;
