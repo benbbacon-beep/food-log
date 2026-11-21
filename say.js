@@ -51,13 +51,26 @@ const norm=s=>s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[
 const toks=s=>norm(s).split(' ').filter(w=>w&&!STOP.has(w)&&!/^\d/.test(w)&&!unitOf(w)).map(stem);
 // a food's own words, without "(per 100ml, UK label)" style notes
 const foodToks=name=>toks(name.replace(/\((?:[^)]*\b(?:label|per|kcal)\b[^)]*)\)/gi,' ').replace(/\b\d+\s*(g|ml)\b/gi,' '));
-// 1 = the same word (or near enough: "macadamia"/"macadamias"), .85 = an everyday synonym, 0 = no
+// letters apart, counting a swapped pair as one ("avacado"/"avocado" = 1, "macademia"/"macadamia" = 1)
+function dist(a,b,max){
+  if(Math.abs(a.length-b.length)>max)return max+1;
+  const d=[];for(let i=0;i<=a.length;i++){d[i]=[i];for(let j=1;j<=b.length;j++)d[i][j]=i?0:j}
+  for(let i=1;i<=a.length;i++){let best=99;for(let j=1;j<=b.length;j++){
+    const c=a[i-1]===b[j-1]?0:1;let v=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+c);
+    if(i>1&&j>1&&a[i-1]===b[j-2]&&a[i-2]===b[j-1])v=Math.min(v,d[i-2][j-2]+1);d[i][j]=v;if(v<best)best=v}
+    if(best>max)return max+1}
+  return d[a.length][b.length];
+}
+const MEMO=new Map();
+// 1 = the same word (or near enough: "macadamia"/"macadamias"), .9 = a typo, .85 = an everyday synonym, 0 = no
 function same(a,b){
   if(a===b)return 1;
-  const [s,l]=a.length<b.length?[a,b]:[b,a];
-  if(s.length>=4&&l.startsWith(s)&&s.length>=l.length*.75)return 1;
-  for(const g of SYN)if(g.includes(a)&&g.includes(b))return .85;
-  return 0;
+  const k=a<b?a+'|'+b:b+'|'+a;if(MEMO.has(k))return MEMO.get(k);
+  let r=0;const [s,l]=a.length<b.length?[a,b]:[b,a];
+  if(s.length>=4&&l.startsWith(s)&&s.length>=l.length*.75)r=1;
+  else if(s.length>=4&&l.length>=5&&dist(a,b,l.length>=8?2:1)<=(l.length>=8?2:1)&&a[0]===b[0])r=.9; // short words only allow one slip, and the first letter must match
+  else for(const g of SYN)if(g.includes(a)&&g.includes(b)){r=.85;break}
+  if(MEMO.size>20000)MEMO.clear();MEMO.set(k,r);return r;
 }
 function score(q,f){
   const ft=f._t||(f._t=foodToks(f.name));if(!q.length||!ft.length)return null;
@@ -149,6 +162,9 @@ function amount(r){
   else{r.qty=n;r.qtyState='guess';r.note='Said '+u+', logged as '+fu}
   return r;
 }
-const api={parse,match,amount,numberWords,toks,foodToks};
+// foods for a search box, best first: everything that matches well enough, typos and everyday names included
+function search(text,foods){const q=toks(text);if(!q.length)return[];
+  return foods.map(f=>({f,s:score(q,f)})).filter(x=>x.s!=null&&x.s>=7).sort((a,b)=>b.s-a.s).map(x=>x.f)}
+const api={parse,match,amount,numberWords,toks,foodToks,search};
 if(typeof module!=='undefined')module.exports=api;else root.FLSay=api;
 })(this);

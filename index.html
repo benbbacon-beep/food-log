@@ -52,7 +52,11 @@ button:active{opacity:.75}
 .band{position:absolute;left:0;right:0;top:0;height:calc(env(safe-area-inset-top) + 156px);background:var(--band)}
 .wrap>*:not(.band){position:relative}
 header{display:flex;align-items:center;gap:8px;padding:6px 0 14px;color:var(--onband)}
-header h1{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:0;flex:1;line-height:1.15}
+header h1{font-size:23px;font-weight:800;letter-spacing:-.3px;margin:0;flex:1;line-height:1.15;min-width:0}
+.hbtn{display:block;width:100%;text-align:left;font:inherit;color:inherit;padding:0}
+.sync{display:inline-block;width:7px;height:7px;border-radius:4px;margin:0 6px 1px 1px;vertical-align:middle;background:#34C759}
+.sync.busy{background:currentColor;opacity:.55;animation:pulse 1s infinite}
+.sync.wait{background:#FFB547}.sync.bad{background:#FF5C6C}
 header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spacing:0;min-height:18px}
 .iconbtn{width:44px;height:44px;border-radius:22px;background:var(--bandbtn);display:grid;place-items:center;font-size:18px;color:var(--onband);flex:none}
 .iconbtn:disabled{opacity:.35}
@@ -198,9 +202,8 @@ input[type=number]{-moz-appearance:textfield}
 .hd{position:absolute;width:44px;height:44px;margin:-22px 0 0 -22px;touch-action:none}
 .hd::after{content:'';position:absolute;left:12px;top:12px;width:20px;height:20px;border-radius:10px;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.5)}
 .scanmsg{text-align:center;color:var(--dim);font-size:14px;padding:10px 0;min-height:40px}
-.saybar{display:flex;align-items:center;gap:12px;width:100%;background:var(--card);border-radius:20px;padding:10px 14px 10px 10px;margin-bottom:12px;box-shadow:var(--shadow);color:var(--dim);font-weight:600;text-align:left}
-.saybar:disabled{opacity:.5}
-.saymic{width:40px;height:40px;border-radius:20px;background:var(--acc);color:var(--onacc);display:grid;place-items:center;flex:none}
+.wrap>.fab{position:fixed;right:max(18px,calc(50vw - 262px));bottom:calc(20px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:30px;background:var(--acc);color:var(--onacc);display:grid;place-items:center;box-shadow:0 4px 16px rgba(0,0,0,.25);z-index:5}
+.wrap>.fab:disabled{opacity:.4}.fab svg{width:26px;height:26px}
 .saytxt{width:100%;min-height:110px;padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--card);outline:none;font:inherit;font-size:17px;resize:vertical}
 .saytxt:focus{border-color:var(--acc)}
 .bigmic{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:14px;border-radius:14px;background:var(--card);font-weight:700;margin:10px 0}
@@ -231,7 +234,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='21';
+const APP_VERSION='22';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -353,7 +356,7 @@ const unsend=job=>{if(inFlight===job.qid||!Q.some(j=>j.qid===job.qid))return fal
 async function flush(force){
   if(flushing||!CFG||S.badKey)return;
   if(!force&&Date.now()<retryAt)return;
-  flushing=true;let changed=false;
+  flushing=true;let changed=false;if(Q.some(x=>!x.held))render(); // the header dot shows it's saving
   try{
     for(;;){
       const now=Date.now(),j=Q.find(x=>!x.held&&!(x.after>now));if(!j)break;
@@ -414,6 +417,14 @@ function arcs(c,R,sw,col,ratio){
   return h;
 }
 function totals(es){const t={kcal:0,fat:0,protein:0,net:0};es.forEach(e=>MKEYS.forEach(m=>t[m]+=e[m]));return t}
+// the header dot: green = all in the sheet, grey = saving or checking, amber = waiting for signal, red = needs you
+const SYNC={ok:['ok','Everything is saved'],busy:['busy','Saving'],wait:['wait','Waiting to send'],bad:['bad','Something needs a look']};
+function syncState(){
+  if(S.badKey||Q.some(j=>j.held)||(S.error&&S.error!=='offline'))return 'bad';
+  if(S.error==='offline'||(Q.length&&retryAt>Date.now()))return 'wait';
+  if(Q.length||S.loading||flushing)return 'busy';
+  return 'ok';
+}
 function banners(){
   let h='';
   const now=Date.now(),held=Q.filter(j=>j.held),waiting=Q.filter(j=>!j.held&&!(j.after>now)).length;
@@ -433,7 +444,7 @@ function render(){
   const isToday=S.date===today();
   const v=view(),ready=!!v,first=!v||(S.data.partial&&S.loading); // first = nothing trustworthy for this day yet
   const d=v||{goals:{},entries:[]},g=d.goals||{},t=totals(d.entries),unloaded=ready&&S.data.partial&&!S.loading;
-  let h=`<div class="band"></div><header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1>${isToday?'Today':nice(S.date)}<span class="sub">${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></h1><button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Goals and settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
+  let h=`<div class="band"></div><header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1><button class="hbtn" data-act="refresh" aria-label="Refresh. ${SYNC[syncState()][1]}">${isToday?'Today':nice(S.date)}<span class="sub"><i class="sync ${syncState()}" aria-hidden="true"></i>${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></button></h1><button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Goals and settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
   h+=banners();
   h+='<div class="card mac"><div class="pages" data-sw="top"><div class="pg rings" aria-label="Goals">';
   for(const [k,label,u,col,cap] of MACROS){
@@ -443,7 +454,6 @@ function render(){
     h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" aria-label="${label}: ${ready?fmt(val):'loading'} of ${fmt(goal)} ${u}"><circle cx="38" cy="38" r="31" fill="none" style="stroke:${tint(col)}" stroke-width="8"/>${arc}</svg><b>${ready?fmt(val):'–'}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}">${sub}</div></button>`;
   }
   h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
-  h+=`<button class="saybar" data-act="say" ${ready?'':'disabled'}><span class="saymic">${IC.mic}</span>Say or type what you ate</button>`;
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
     const tot=es.length?kc(mt.kcal)+' kcal, '+fmt(mt.net)+' g net':first?'Loading…':unloaded?'Not loaded':'Nothing yet';
@@ -461,7 +471,7 @@ function render(){
     }
     h+='</div>';
   }
-  app.innerHTML=h;
+  h+=`<button class="fab" data-act="say" aria-label="Say or type what you ate" ${ready?'':'disabled'}>${IC.mic}</button>`;app.innerHTML=h;
   swipers();
 }
 // the same food logged more than once in a meal shows as one row with its total (the sheet still has a row per portion)
@@ -587,7 +597,9 @@ function usualAt(meal){
 function listFoods(){
   if(!$('#flist'))return;
   const v=view(),words=norm(AD.q).split(/\s+/).filter(Boolean);
-  const fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
+  let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
+  // then near misses: typos ("avacado") and everyday names ("almond milk"), after the exact matches
+  const close=words.length&&window.FLSay?FLSay.search(AD.q,v.foods).filter(f=>!fs.includes(f)):[];
   const row=f=>{const q=usualQty(f),k=q/f.per;return `<div class="row frow"><button class="n" data-act="pick" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${fmt(q)} ${esc(f.label)} · ${r0(f.kcal*k)} kcal · ${fmt(f.net*k)} g net</small></button><button class="plus" aria-label="Add ${fmt(q)} ${esc(f.label)} of ${esc(f.name)}" data-act="quick" data-id="${esc(f.id)}">${IC.plus}</button></div>`};
   const mine=v.entries.filter(e=>AD.added.includes(e.id));
   $('#added').innerHTML=mine.length?`<div class="added"><span>Added</span>${mine.map(e=>`<button class="pill" data-act="entry" data-id="${esc(e.id)}">${esc(cut(e.food,18))} · ${fmt(e.qty)} ${esc(e.unit)}</button>`).join('')}</div>`:'';
@@ -595,8 +607,9 @@ function listFoods(){
   if(!words.length){const n=usualAt(AD.meal),here=new Set(v.entries.filter(e=>e.meal===AD.meal).map(e=>e.foodId));
     usual=fs.filter(f=>n[f.id]>=2&&!here.has(f.id)).sort((a,b)=>n[b.id]-n[a.id]).slice(0,3)}
   const rest=fs.filter(f=>!usual.includes(f));
-  $('#flist').innerHTML=!fs.length?`<div class="empty" style="padding:16px 0">No match. <button class="link" data-act="newFood">Create "${esc(AD.q)}"</button></div>`
-    :(usual.length?`<div class="sec">Usual for ${mealName(AD.meal)}</div>${usual.map(row).join('')}<div class="sec">All foods, most used first</div>`:'')+rest.map(row).join('');
+  $('#flist').innerHTML=!fs.length&&!close.length?`<div class="empty" style="padding:16px 0">No match. <button class="link" data-act="newFood">Create "${esc(AD.q)}"</button></div>`
+    :(usual.length?`<div class="sec">Usual for ${mealName(AD.meal)}</div>${usual.map(row).join('')}<div class="sec">All foods, most used first</div>`:'')+rest.map(row).join('')
+    +(close.length?(fs.length?'<div class="sec">Close matches</div>':'')+close.map(row).join(''):'');
 }
 // one tap: log the usual amount and stay in the list
 function logFood(f,qty,meal){
@@ -1017,7 +1030,7 @@ const ACT={
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m))},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
-  ffUnit:d=>ffUnit(d.u),ffSave,say:openSay,mic:()=>REC?micStop():micStart(),sayNext,sayLog,
+  ffUnit:d=>ffUnit(d.u),ffSave,say:openSay,refresh:()=>{load();flush(true)},mic:()=>REC?micStop():micStart(),sayNext,sayLog,
   sayMeal:d=>{SY.meal=d.m;sheetEl.querySelectorAll('[data-act=sayMeal]').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m));sayRefresh()},
   sayDel:d=>{SY.rows.splice(Number(d.i),1);if(!SY.rows.length)return back();sheetSayCheck()},
   sayPick:d=>{SP=Number(d.i);nav(sheetSayPick)},sayChoose:d=>sayChoose(d.id),

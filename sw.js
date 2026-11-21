@@ -1,5 +1,5 @@
 // Bump CACHE with every release: that is what makes phones pick up the new version.
-const CACHE='food-log-v21';
+const CACHE='food-log-v22';
 // the label reader (~7 MB) lives in its own cache so app updates don't download it again
 const OCR='food-log-ocr-1';
 const SHELL=['./','index.html','manifest.webmanifest','icon-192.png','icon-512.png','jakarta.woff2','ocr/label.js','say.js'];
