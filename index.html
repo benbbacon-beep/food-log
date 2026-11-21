@@ -187,6 +187,7 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .chex{font-size:13px;color:var(--dim);font-weight:600;min-width:64px;text-align:right}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom) + var(--kb));transform:translateX(-50%);background:var(--toastbg);color:var(--toastfg);padding:10px 14px;border-radius:12px;font-weight:600;font-size:14px;z-index:20;display:none;gap:12px;align-items:center;max-width:90vw}
 .toast{pointer-events:none}
+html:not(.sheet-open) .toast{bottom:calc(92px + env(safe-area-inset-bottom))} /* sit above the mic button */
 .toast button{color:var(--toastacc);font-weight:700;white-space:nowrap;pointer-events:auto;padding:6px 4px}
 .setup{padding:40px 10px;text-align:center;color:var(--dim)}
 input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
@@ -234,7 +235,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='22';
+const APP_VERSION='23';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
