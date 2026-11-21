@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#17181F">
 <title>Food Log</title>
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-ring-192.png">
+<link rel="apple-touch-icon" href="icon-ring-192.png">
 <link rel="preload" href="jakarta.woff2" as="font" type="font/woff2" crossorigin>
 <script>/* colour theme before first paint, so it never flashes the wrong colours */
 // any colour from the wheel: pick readable text for it, and keep buttons visible on light or dark cards
@@ -322,7 +322,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='27';
+const APP_VERSION='28';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
