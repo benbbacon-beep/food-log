@@ -39,7 +39,7 @@ const UNITS=[[/^(g|gs|gram|grams|gramme|grammes|gm|gms|grm)$/,'g'],[/^(ml|mls|mi
 const unitOf=w=>{for(const [re,u] of UNITS)if(re.test(w))return u;return null};
 const MEALW={breakfast:'breakfast',brekkie:'breakfast',lunch:'lunch',dinner:'dinner',tea:'dinner',supper:'dinner',snack:'snack',snacks:'snack'};
 // words that say nothing about which food it is
-const STOP=new Set(('i ive i\'ve had have just ate eaten some of the a an my with label per uk us generic raw cooked drained by la le de del and & original classic plain fresh '+
+const STOP=new Set(('i ive i\'ve had have just ate eaten some of the a an my with label per uk us generic raw cooked drained by la le de del and & original classic plain fresh add log put record please '+
   'bag bags pack packs packet packets slice slices piece pieces tin tins can cans stick sticks portion portions serving servings').split(' '));
 // everyday words for things his food names call something else
 const SYN=[['milk','drink','alpro','unsweetened','oatly','oat','soya'],['mayo','mayonnaise'],['prawn','shrimp'],['rind','rinds','snack','puff','scratching','crackling','crunchy'],
@@ -105,7 +105,7 @@ function chunk(c){
     rest.push(x);
   }
   if(unit==='kg'){unit='g';num*=1000}if(unit==='l'){unit='ml';num*=1000}
-  while(rest.length&&/^(of|some|a|an|the|i|ive|had|have|just|ate|my)$/.test(rest[0]))rest.shift(); // "of peanut butter" -> "peanut butter"
+  while(rest.length&&/^(of|some|a|an|the|i|ive|had|have|just|ate|my|add|log|put|record|please)$/.test(rest[0]))rest.shift(); // "of peanut butter" -> "peanut butter"
   return{phrase:rest.join(' '),num,unit,usual};
 }
 // what he said -> {meal, rows:[{said, phrase, food, sure, alts, qty, qtyState: ok|guess|blank, note}]}
@@ -115,7 +115,13 @@ function parse(text,foods,alias,defaultMeal){
     .replace(/\n/g,' , ').replace(/[,;]/g,' , ').replace(/\.(?!\d)/g,' , ');
   s=norm(s.replace(/,/g,' qqcomma ')).replace(/qqcomma/g,',');
   let meal=null;
-  s=s.replace(/\b(?:for|at|with|as|in)\s+(?:my\s+|a\s+|the\s+)?(breakfast|brekkie|lunch|dinner|tea|supper|snacks?)\b/g,(m,x)=>{meal=MEALW[x];return ' '});
+  // the meal: "for breakfast", but speech often hears "for" as "4" ("4 breakfast"), and people also say "to lunch",
+  // "breakfast: 2 eggs" or just "dinner". A meal word on its own counts unless it's part of one of his food names
+  // (e.g. "Pork Snacks"); "tea" and "snack" need a word like "for" in front, as they're also foods.
+  const inNames=new Set();foods.forEach(f=>norm(f.name).split(' ').forEach(w=>inNames.add(w)));
+  s=s.replace(/\b(?:(for|4|four|to|at|with|as|in|into|on|from)\s+)?(?:(?:my|a|the|this|todays|today s)\s+)?(breakfast|brekkie|lunch|dinner|tea|supper|snacks?)\b/g,(m,prep,x)=>{
+    if(!prep&&(x==='tea'||/^snack/.test(x)||inNames.has(x)))return m;
+    meal=MEALW[x];return ' , '});
   s=numberWords(s.replace(/\s+/g,' ').trim());
   for(const f of foods){const n=norm(f.name).split(' ');
     for(let i=1;i<n.length-1;i++)if(n[i]==='and'||n[i]==='&'){const a=n[i-1],b=n[i+1];
