@@ -19,27 +19,29 @@ window.flVars=function(hex,dark){
   return{'--band':hex,'--onband':white?'#FFFFFF':'#111114','--bandbtn':white?'rgba(255,255,255,.16)':'rgba(0,0,0,.08)','--acc':acc,'--onacc':accWhite?'#FFFFFF':'#111114'};
 };
 (function(){var t={};try{t=JSON.parse(localStorage.getItem('fl_theme'))||{}}catch(e){}
-var d=document.documentElement,m=t.mode||'light',band=t.band||'ink';if(m==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
+var d=document.documentElement,m=t.mode||'light',band=({ink:'mono',blue:'cyan',teal:'mint',orange:'coral'})[t.band]||t.band||'mono';if(m==='auto')m=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light';
 d.dataset.mode=m;d.dataset.band=band;
 if(band==='custom'&&/^#[0-9a-f]{6}$/i.test(t.custom||'')){var v=flVars(t.custom,m==='dark');for(var k in v)d.style.setProperty(k,v[k])}})();</script>
 <style>
 @font-face{font-family:Jakarta;src:url(jakarta.woff2) format('woff2');font-weight:200 800;font-display:swap}
 /* light (default) */
-:root{--bg:#F2F2F7;--card:#FFFFFF;--card2:#F0F0F5;--line:#ECECF1;--text:#111114;--dim:#6B6B75;--faint:#86868F;--bad:#E0243A;--warn:#9A5B00;
+:root{--bg:#FAFAFA;--card:#FFFFFF;--card2:#F1F1F3;--line:#EBEBEE;--text:#111113;--dim:#5F5F68;--faint:#82828B;--bad:#E0243A;--warn:#9A5B00;
 --kcal:#AF52DE;--net:#FF9500;--pro:#007AFF;--fat:#34C759;--tint:16%;
 --band:#17181F;--onband:#FFFFFF;--bandbtn:rgba(255,255,255,.14);--acc:#111114;--onacc:#FFFFFF;--link:#0062D6;
 --shadow:0 1px 3px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05);--shadow2:0 6px 24px rgba(0,0,0,.10);--scrim:rgba(0,0,0,.35);
 --toastbg:#1C1C22;--toastfg:#FFFFFF;--toastacc:#8AB8FF;--bw:#FFF3DC;--be:#FFE6E9;--bi:#E8F0FF;--bitext:#1D4ED8;
 --m-breakfast:#FF9500;--m-lunch:#34C759;--m-dinner:#5856D6;--m-snack:#FF2D55;--kb:0px;color-scheme:light}
-[data-mode=dark]{--bg:#0D0E12;--card:#181A21;--card2:#23262F;--line:#262A33;--text:#F1F2F6;--dim:#A3A7B3;--faint:#80848F;--bad:#FF5C6C;--warn:#FFB547;
+[data-mode=dark]{--bg:#0B0B0D;--card:#151518;--card2:#1E1E22;--line:#232328;--text:#F4F4F5;--dim:#A1A1AA;--faint:#787881;--bad:#FF5C6C;--warn:#FFB547;
 --kcal:#BF5AF2;--net:#FF9F0A;--pro:#0A84FF;--fat:#30D158;--tint:24%;
 --band:#1E2029;--acc:#F1F2F6;--onacc:#111114;--link:#7FB2FF;--shadow:none;--shadow2:0 6px 24px rgba(0,0,0,.4);--scrim:rgba(0,0,0,.6);
 --toastbg:#F1F2F6;--toastfg:#111114;--toastacc:#0057C2;--bw:#2A2210;--be:#2A1216;--bi:#0E1A33;--bitext:#8DB4FF;
 --m-breakfast:#FF9F0A;--m-lunch:#30D158;--m-dinner:#5E5CE6;--m-snack:#FF375F;color-scheme:dark}
-[data-band=blue]{--band:#2457F5;--acc:#2457F5;--onacc:#FFFFFF}
-[data-band=teal]{--band:#0B7F6F;--acc:#0B7F6F;--onacc:#FFFFFF}
-[data-band=violet]{--band:#6D4AFF;--acc:#6D4AFF;--onacc:#FFFFFF}
-[data-band=orange]{--band:#E2581A;--acc:#E2581A;--onacc:#FFFFFF}
+/* accents: mono follows the text colour; the rest are tuned to read on both light and dark */
+[data-band=mono]{--acc:#111113;--onacc:#FFFFFF}[data-mode=dark][data-band=mono]{--acc:#F4F4F5;--onacc:#0B0B0D}
+[data-band=cyan]{--acc:#00B8D4;--onacc:#04232A}[data-mode=dark][data-band=cyan]{--acc:#00D7F0}
+[data-band=violet]{--acc:#6E5BF5;--onacc:#FFFFFF}[data-mode=dark][data-band=violet]{--acc:#8E7CFF;--onacc:#0B0B0D}
+[data-band=mint]{--acc:#12B886;--onacc:#03251B}[data-mode=dark][data-band=mint]{--acc:#2FD4A0}
+[data-band=coral]{--acc:#F2553D;--onacc:#FFFFFF}[data-mode=dark][data-band=coral]{--acc:#FF6A55;--onacc:#1B0B08}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--text);font:15px/1.4 Jakarta,system-ui,sans-serif;font-variant-numeric:tabular-nums}
 html,body{overscroll-behavior-y:none} /* no pull-to-refresh: swiping down never reloads the app */
@@ -376,6 +378,84 @@ input[type=number]{-moz-appearance:textfield}
 #splash.out{opacity:0;transform:scale(1.04);pointer-events:none}
 #app.in{animation:appIn .45s cubic-bezier(.2,.8,.2,1)}
 @keyframes appIn{from{opacity:0;transform:translateY(14px)}}
+/* ===== calm layout (v32) ===== */
+.wrap.calm{padding:calc(6px + env(safe-area-inset-top)) 22px calc(120px + env(safe-area-inset-bottom))}
+.calm .top{display:flex;align-items:center;gap:2px;padding:4px 0 10px;margin:0 -12px;color:var(--text)}
+.calm .top .iconbtn{background:transparent;color:var(--dim)}
+.calm .top .hbtn{flex:1;text-align:center;min-width:0}
+.calm .top .hbtn b{display:block;font-size:15px;font-weight:700}
+.calm .top .sub{display:flex;justify-content:center;align-items:center;font-size:12px;color:var(--faint);font-weight:500;opacity:1;min-height:0}
+.calm .todaypill{background:var(--card2);color:var(--text)}
+.hero2{display:block;width:100%;text-align:left;padding:14px 0 0}
+.hero2 .hn{display:flex;align-items:baseline;gap:8px}
+.hero2 b{font-size:58px;font-weight:800;letter-spacing:-2px;line-height:1}
+.hero2 em{font-style:normal;font-size:15px;font-weight:600;color:var(--dim)}
+.kbar{display:block;height:6px;border-radius:3px;background:color-mix(in srgb,var(--kcal) 18%,transparent);margin-top:14px;overflow:hidden}
+.kbar i{display:block;height:100%;border-radius:3px;background:var(--kcal);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.kfoot{display:flex;justify-content:space-between;font-size:12px;color:var(--faint);margin-top:7px}
+.mac3{display:flex;gap:18px;margin-top:24px}
+.m3{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;text-align:left}
+.m3 .l{font-size:12px;font-weight:600;color:var(--dim)}
+.m3 .v b{font-size:18px;font-weight:800}
+.m3 .v small{font-size:12px;color:var(--faint)}
+.m3 .mbar{display:block;height:5px;border-radius:3px;background:color-mix(in srgb,var(--c) 18%,transparent);overflow:hidden}
+.m3 .mbar i{display:block;height:100%;border-radius:3px;background:var(--c);transition:width .6s cubic-bezier(.2,.8,.2,1)}
+.m3 .s{font-size:11.5px;color:var(--faint)}
+.m3.bad .s{color:var(--bad);font-weight:700}
+.calm .rule{height:1px;background:var(--line);margin:24px 0 8px}
+.ms{padding:14px 0 6px}
+.msh{display:flex;align-items:center;gap:8px}
+.ms h2{margin:0;font-size:21px;font-weight:800;letter-spacing:-.3px}
+.ms .mtog{display:flex;align-items:center;gap:6px;flex:1;min-width:0;text-align:left}
+.ms .chev{color:var(--faint);transition:transform .2s}
+.ms.folded .chev{transform:rotate(-90deg)}
+.mtot{font-size:13px;color:var(--dim);font-weight:600;padding:8px 4px;white-space:nowrap}
+.ms .plus{width:38px;height:38px;border-radius:19px;background:var(--card2);color:var(--text)}
+.ms .plus svg{width:18px;height:18px}
+.msub{font-size:12.5px;color:var(--faint);margin-top:2px}
+.ms.none .msh h2{flex:1;color:var(--faint)}
+.mnote{font-size:12.5px;color:var(--faint)}
+.addpill{display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;background:var(--card2);color:var(--text);font-size:13px;font-weight:700}
+.addpill svg{width:15px;height:15px}
+.mlist{margin-top:4px}
+.calm .ent{display:block;padding:0;border-top:1px solid var(--line)}
+.calm .mlist>.ent:first-child{border-top:0}
+.calm .ent>.row{display:flex;align-items:center;gap:14px;width:100%;padding:12px 0}
+.calm .ent .n div{font-size:15px;font-weight:600;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.calm .ent .n small{font-size:12.5px;color:var(--faint)}
+.calm .ent .m{font-size:15px;color:var(--text)}
+.calm .ent .m b{font-size:15px;font-weight:700}
+.more{display:block;width:100%;text-align:left;padding:10px 0 4px;font-size:13px;font-weight:700;color:var(--dim);border-top:1px solid var(--line)}
+/* icons: quiet, no coloured tiles */
+.ftile{background:transparent!important;color:var(--faint)!important;width:24px!important;height:24px!important;border-radius:0!important;font-size:14px}
+.ftile svg{width:20px!important;height:20px!important}
+/* the dock */
+.wrap>.dock{position:fixed;left:0;right:0;bottom:calc(18px + env(safe-area-inset-bottom));display:flex;justify-content:center;pointer-events:none;z-index:5}
+.dock{gap:6px}
+.dock>button{pointer-events:auto}
+.dock{}
+.wrap>.dock::before{content:none}
+.dadd,.dmic{height:52px;border-radius:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 30px rgba(0,0,0,.28)}
+.dadd{gap:8px;padding:0 24px;background:var(--acc);color:var(--onacc);font-size:15px;font-weight:800}
+.dadd svg{width:18px;height:18px}
+.dmic{width:52px;background:var(--card);color:var(--text);border:1px solid var(--line)}
+.dadd:disabled,.dmic:disabled{opacity:.4}
+.dadd:active,.dmic:active{transform:scale(.95)}
+/* sheets read as pages */
+.sheet{max-height:calc(96dvh - var(--kb));border-top:0;border-radius:24px 24px 0 0}
+.sh-head{padding:10px 18px 8px}
+.sh-head h3{font-size:22px;font-weight:800;letter-spacing:-.3px}
+.sh-body{padding:0 18px calc(22px + env(safe-area-inset-bottom))}
+.sbox .search{border-radius:24px;background:var(--card2)}
+#flist .fgroup,#spl .fgroup{background:transparent;border-radius:0}
+#flist .fgroup .frow{padding-left:0;padding-right:0}
+.primary{border-radius:28px;min-height:54px}
+.secondary{border-radius:28px}
+.qbox{flex-direction:column;height:auto;background:transparent;box-shadow:none;padding:6px 0}
+.qbox:focus-within{box-shadow:none}
+.qbox input{width:100%;text-align:center;font-size:56px;letter-spacing:-2px;line-height:1.1}
+.qbox span{flex:none;text-align:center;font-size:15px}
+.step{width:52px;height:52px;border-radius:26px;background:var(--card2)}
 @media (prefers-reduced-motion:reduce){#splash .sp-arc,#splash .sp-dot,#app.in,.ent.new{animation:none!important}}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}.rings.grow .arc,.rings.grow .tip,.rings.grow .seg,.sk{animation:none!important}}
 </style>
@@ -387,7 +467,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='31';
+const APP_VERSION='32';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -628,7 +708,7 @@ function afterRender(ok,d){
       const step=now=>{const p=Math.min(1,(now-t0)/550),e=1-Math.pow(1-p,3);el.textContent=f(from+(to-from)*e);if(p<1)requestAnimationFrame(step)};
       el.textContent=f(from);requestAnimationFrame(step)});
   }
-  const mac=document.querySelector('#app .card.mac'),st=$('#stick');
+  const mac=document.querySelector('#app .hero2'),st=$('#stick');
   if(stickObs)stickObs.disconnect();
   if(mac&&st&&window.IntersectionObserver){stickObs=new IntersectionObserver(es=>st.classList.toggle('on',!es[0].isIntersecting),{threshold:0,rootMargin:'-40px 0px 0px 0px'});stickObs.observe(mac)}
 }
@@ -652,48 +732,47 @@ function render(){
   const isToday=S.date===today();
   const v=view(),ready=!!v,first=!v||(S.data.partial&&S.loading); // first = nothing trustworthy for this day yet
   const d=v||{goals:{},entries:[]},g=d.goals||{},t=totals(d.entries),unloaded=ready&&S.data.partial&&!S.loading;
-  let h=`<div class="band"></div><header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1><button class="hbtn" data-act="refresh" aria-label="Refresh. ${SYNC[syncState()][1]}">${isToday?'Today':nice(S.date)}<span class="sub"><i class="sync ${syncState()}" aria-hidden="true"></i>${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></button></h1>${isToday?'':`<button class="todaypill" data-act="today" aria-label="Back to today">${IC.back}Today</button>`}<button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
+  const yest=S.date===shift(today(),-1);
+  let h=`<header class="top"><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><button class="hbtn" data-act="refresh" aria-label="Refresh. ${SYNC[syncState()][1]}"><b>${isToday?'Today':yest?'Yesterday':nice(S.date)}</b><span class="sub"><i class="sync ${syncState()}" aria-hidden="true"></i>${nice(S.date)}</span></button>${isToday?'':`<button class="todaypill" data-act="today" aria-label="Back to today">${IC.back}Today</button>`}<button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
   h+=banners();
-  if(TH.hero!==false){const gk=g.kcal||0,val=t.kcal,over=gk&&val>gk,left=over?val-gk:gk-val;
-    h+=`<button class="herok" data-act="ring" data-k="kcal" ${ready?'':'disabled'} aria-label="Calories: ${ready&&!first?kc(val):'loading'} of ${kc(gk)}"><span class="hl">${first||!gk?'Calories today':over?'Calories over today':'Calories left today'}</span>
-    <span class="hn">${first?'<i class="sk" style="width:150px;height:40px;border-radius:10px"></i>':`<b data-n="kleft" data-v="${gk?left:val}">${kc(gk?left:val)}</b><em>${gk?'of '+kc(gk):'kcal'}</em>`}</span>
-    <span class="hbar"><i style="width:${first||!gk?0:Math.min(100,val/gk*100)}%"></i></span></button>`}
   newIds(ready&&!first,d);
-  const grow=ready&&!first&&ringsGrown!==S.date;if(grow)ringsGrown=S.date; // rings fill up once each time a day opens, not on every change
-  h+=`<div class="card mac"><div class="pages" data-sw="top"><div class="pg rings ${grow?'grow':''}" aria-label="Goals">`;
-  const HERO=TH.hero!==false;
-  for(const [k,label,u,col,cap] of MACROS){
-    if(HERO&&k==='kcal')continue; // calories get the big number in the band instead
-    const goal=g[k]||0,val=t[k],frac=goal?Math.min(1,val/goal):0,over=goal&&val>goal+0.05,un=k==='kcal'?'':' g';
-    const sub=first?'<i class="sk" style="width:46px"></i>':!goal?'No goal':over?fmt(val-goal)+un+' over':fmt(goal-val)+un+' left';
-    const sweep=goal&&val/goal<=1.005,arc=ready&&!first&&goal?arcs(38,30,10,over&&cap?'var(--bad)':sweep?`url(#rg-${k})`:col,val/goal):'';
-    const subCol=first||!goal||(over&&cap)?'':` style="color:color-mix(in srgb,${col} 70%,var(--text))"`; // "x left" in the ring's own colour, dark enough to read
-    h+=`<button class="ring" data-act="ring" data-k="${k}" ${ready?'':'disabled'}><div class="dial"><svg width="76" height="76" viewBox="0 0 76 76" role="img" style="--rc:${col}" aria-label="${label}: ${ready&&!first?fmt(val):'loading'} of ${fmt(goal)} ${u}"><defs><linearGradient id="rg-${k}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:color-mix(in srgb,${col} 55%,#fff)"/><stop offset="1" style="stop-color:${col}"/></linearGradient></defs><circle cx="38" cy="38" r="30" fill="none" style="stroke:${tint(col)}" stroke-width="10"/>${arc}</svg><b data-n="${k}" data-v="${ready&&!first?val:''}">${ready&&!first?fmt(val):''}</b></div><div class="rl">${label}</div><div class="rs ${over&&cap?'bad':''}"${subCol}>${sub}</div></button>`;
+  // calories: one big number and a thin bar
+  {const gk=g.kcal||0,val=t.kcal,over=gk&&val>gk,left=over?val-gk:gk-val;
+    h+=`<button class="hero2" data-act="ring" data-k="kcal" ${ready?'':'disabled'} aria-label="Calories: ${ready&&!first?kc(val):'loading'} of ${kc(gk)}"><span class="hn">${first?'<i class="sk" style="width:170px;height:48px;border-radius:12px"></i>':`<b data-n="kleft" data-v="${gk?left:val}">${kc(gk?left:val)}</b><em>${gk?(over?'kcal over':'kcal left'):'kcal'}</em>`}</span>
+    <span class="kbar ${over?'over':''}"><i style="width:${first||!gk?0:Math.min(100,val/gk*100)}%"></i></span><span class="kfoot"><span>${first?'&nbsp;':kc(val)+' eaten'}</span><span>${gk?'Goal '+kc(gk):'No goal'}</span></span></button>`}
+  // net carbs, protein, fat: three slim bars
+  h+='<div class="mac3">';
+  for(const [k,label,u,col,cap] of MACROS){if(k==='kcal')continue;
+    const goal=g[k]||0,val=t[k],over=goal&&val>goal+0.05,bad=over&&cap;
+    const sub=first?'<i class="sk" style="width:56px"></i>':!goal?'No goal':over?fmt(val-goal)+' g over':fmt(goal-val)+' g left';
+    h+=`<button class="m3 ${bad?'bad':''}" data-act="ring" data-k="${k}" ${ready?'':'disabled'} style="--c:${bad?'var(--bad)':col}"><span class="l">${label}</span><span class="v"><b data-n="${k}" data-v="${ready&&!first?val:''}">${ready&&!first?fmt(val):'–'}</b><small> / ${goal?fmt(goal):'–'} g</small></span><span class="mbar"><i style="width:${first||!goal?0:Math.min(100,val/goal*100)}%"></i></span><span class="s">${sub}</span></button>`;
   }
-  h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
+  h+='</div><div class="rule"></div>';
+  // meals: headings and plain lists
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
+    if(!es.length){h+=`<section class="ms none"><div class="msh"><h2>${label}</h2>${first?'<i class="sk" style="width:60px"></i>':unloaded?'<span class="mnote">Not loaded</span>':''}<button class="addpill" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}Add</button></div></section>`;continue}
     const times=es.map(e=>e.at?String(e.at).slice(11,16):'').filter(Boolean).sort(),span=times.length?(times[0]===times[times.length-1]?times[0]:times[0]+'–'+times[times.length-1]):'';
-    const tot=es.length?'<b>'+kc(mt.kcal)+'</b> kcal · '+fmt(mt.net)+' g net · '+r0(mt.protein)+' g protein'+(span?' · '+span:''):first?'<i class="sk" style="width:120px"></i>':unloaded?'Not loaded':'Nothing yet';
-    const folded=es.length&&FOLD[m];
-    h+=`<div class="card meal ${folded?'folded':''} ${!es.length&&!first?'slim':''}"><div class="mh"><button class="mtog" data-act="fold" data-meal="${m}" ${es.length?`aria-expanded="${!folded}"`:'disabled'}><span class="mi" style="--mc:var(--m-${m})">${MI[m]}</span><h2>${label}<span class="tot">${tot}</span></h2>${es.length?`<span class="chev">${IC.chev}</span>`:''}</button><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>`;
-    if(!es.length)delete S.pg['m:'+m];
-    if(es.length&&!folded){
-      // swipe the card: what's in it, then the rings chart for this meal
-      h+=`<div class="pages" data-sw="m:${m}"><div class="pg" aria-label="${label} foods">`;
-      for(const gr of groups(es)){
+    const folded=FOLD[m],gs=groups(es),cut5=!EXP[m]&&gs.length>6;
+    h+=`<section class="ms ${folded?'folded':''}"><div class="msh"><button class="mtog" data-act="fold" data-meal="${m}" aria-expanded="${!folded}"><h2>${label}</h2><span class="chev">${IC.chev}</span></button><button class="mtot" data-act="mealsum" data-meal="${m}" aria-label="${label} breakdown">${kc(mt.kcal)} kcal</button><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>
+    <div class="msub">${fmt(mt.net)} g net · ${r0(mt.protein)} g protein${span?' · '+span:''}</div>`;
+    if(!folded){
+      h+='<div class="mlist">';
+      for(const gr of (cut5?gs.slice(0,5):gs)){
         const t=totals(gr.es),one=gr.es.length===1,e=gr.es[0],qty=gr.es.reduce((a,x)=>a+x.qty,0),f=foodOf(e.foodId);
         const at=gr.es.map(x=>x.at?String(x.at).slice(11,16):'').filter(Boolean).sort().pop()||'',isNew=gr.es.some(x=>NEWIDS.has(x.id));
-        h+=`<div class="ent ${gr.es.some(x=>x.pending)?'pending':''} ${isNew?'new':''}"><button class="row" data-act="${one?'entry':'group'}" ${one?`data-id="${esc(e.id)}"`:`data-meal="${m}" data-fid="${esc(gr.key)}"`}>${tileOf(f||{name:e.food,fat:t.fat,protein:t.protein,net:t.net})}<div class="n"><div>${esc(e.food)}</div><small>${fmt(qty)} ${esc(e.unit)}${at?' · '+at:''}${one?'':` <span class="times">×${gr.es.length}</span>`}</small></div><div class="m"><b>${kc(t.kcal)}</b><span class="u"> kcal</span><br>${fmt(t.net)} g net</div></button>${f?`<button class="again" data-act="again" data-meal="${m}" data-fid="${esc(f.id)}" aria-label="Log ${fmt(usualQty(f))} ${esc(f.label)} more ${esc(f.name)}">${IC.plus}</button>`:'<span class="again"></span>'}</div>`;
+        h+=`<div class="ent ${gr.es.some(x=>x.pending)?'pending':''} ${isNew?'new':''}"><button class="row" data-act="${one?'entry':'group'}" ${one?`data-id="${esc(e.id)}"`:`data-meal="${m}" data-fid="${esc(gr.key)}"`}>${tileOf(f||{name:e.food,fat:t.fat,protein:t.protein,net:t.net})}<div class="n"><div>${esc(e.food)}</div><small>${fmt(qty)} ${esc(e.unit)}${at?' · '+at:''}${one?'':` <span class="times">×${gr.es.length}</span>`}</small></div><div class="m"><b>${kc(t.kcal)}</b></div></button></div>`;
       }
-      h+=`</div><div class="pg" aria-label="${label} chart">${chart(mt,g,true,true)}</div></div>${dots('m:'+m,2)}`;
+      if(cut5)h+=`<button class="more" data-act="more" data-meal="${m}">${gs.length-5} more · show all</button>`;
+      h+='</div>';
     }
-    h+='</div>';
+    h+='</section>';
   }
-  // totals that stay: a frosted bar pins to the top once the rings scroll away
+  // totals that stay: a frosted bar pins to the top once the big number scrolls away
   h+=`<button class="stick" id="stick" data-act="top" aria-label="Back to the top"><span class="sd"><b>${isToday?'Today':nice(S.date)}</b>${isToday?' '+nice(S.date):''}</span><span class="sb">${MACROS.map(([k,l,u,col])=>{const goal=g[k]||0;return `<span><span class="st"><em>${k==='kcal'?'kcal':k==='net'?'Net':k==='protein'?'Prot':'Fat'}</em>${ready&&!first?(k==='kcal'?kc(t[k]):fmt(t[k])):'–'}</span><i style="--rc:${col}"><i style="width:${goal&&!first?Math.min(100,t[k]/goal*100):0}%"></i></i></span>`}).join('')}</span></button>`;
-  h+=`<button class="fab" data-act="say" aria-label="Say or type what you ate" ${ready?'':'disabled'}>${IC.mic}</button>`;app.innerHTML=h;
-  app.classList.toggle('bigk',TH.hero!==false);
+  // one dock: add food (meal by the clock) and the mic
+  h+=`<div class="dock"><button class="dadd" data-act="add" ${ready?'':'disabled'}>${IC.plus}Add food</button><button class="dmic" data-act="say" aria-label="Say or type what you ate" ${ready?'':'disabled'}>${IC.mic}</button></div>`;app.innerHTML=h;
+  app.classList.add('calm');
   afterRender(ready&&!first,d);
   swipers();
 }
@@ -703,19 +782,23 @@ function groups(es){const by=new Map();for(const e of es){const k=gkey(e);if(!by
 const foodOf=id=>{const r=realId(id);return view().foods.find(f=>f.id===r)};
 const kc=n=>r0(n).toLocaleString('en-GB');
 const FOLD=ls.get('fl_fold',{});
+const EXP={}; // meals opened with "show all" (until the app is closed)
+let MS=null;
+function sheetMeal(){const v=view(),es=v.entries.filter(e=>e.meal===MS),mt=totals(es),label=(MEALS.find(x=>x[0]===MS)||[0,MS])[1];
+  sheetEl.innerHTML=head(label+(S.date===today()?'':' · '+nice(S.date)))+`<div class="sh-body"><div class="meal">${chart(mt,v.goals||{},true,true)}</div><div class="hint" style="margin:10px 2px 0">${es.length} food${es.length===1?'':'s'} · ${kc(mt.kcal)} kcal · ${fmt(mt.net)} g net · ${fmt(mt.protein)} g protein · ${fmt(mt.fat)} g fat</div></div>`}
 function fold(m){FOLD[m]=!FOLD[m];ls.set('fl_fold',FOLD);render()}
 // ----- long-press a logged food: change amount, move, log again, delete -----
 let LP=null;
 (function(){let t=null,x0=0,y0=0,el=null;
   const cancel=()=>{clearTimeout(t);t=null;if(el)el.classList.remove('pressing');el=null};
-  document.addEventListener('pointerdown',e=>{const r=e.target.closest('#app .meal .ent>.row[data-act=entry]');if(!r||STACK.length)return;
+  document.addEventListener('pointerdown',e=>{const r=e.target.closest('#app .ms .ent>.row[data-act=entry]');if(!r||STACK.length)return;
     el=r;x0=e.clientX;y0=e.clientY;r.classList.add('pressing');
     t=setTimeout(()=>{t=null;r.classList.remove('pressing');LP={id:r.dataset.id,swallow:true};setTimeout(()=>{if(LP)LP.swallow=false},700);if(navigator.vibrate)try{navigator.vibrate(12)}catch(_){};nav(sheetLong)},480)});
   document.addEventListener('pointermove',e=>{if(t&&(Math.abs(e.clientX-x0)>8||Math.abs(e.clientY-y0)>8))cancel()});
   ['pointerup','pointercancel','scroll'].forEach(ev=>document.addEventListener(ev,()=>{if(t)cancel()},true));
   /* the tap that ends a long-press mustn't also open the amount screen */
   document.addEventListener('click',e=>{if(LP&&LP.swallow&&e.target.closest('.ent>.row')){LP.swallow=false;e.stopPropagation();e.preventDefault()}},true);
-  document.addEventListener('contextmenu',e=>{if(e.target.closest('#app .meal .ent'))e.preventDefault()});
+  document.addEventListener('contextmenu',e=>{if(e.target.closest('#app .ms .ent'))e.preventDefault()});
 })();
 function sheetLong(){
   const e=LP&&view().entries.find(x=>x.id===LP.id);if(!e)return back();
@@ -1262,7 +1345,6 @@ function sheetGoals(){
   <div class="fgroup" style="padding:14px">
   <div class="swatches" role="radiogroup" aria-label="Colour">${BANDS.map(([b,l,c])=>`<button class="sw" role="radio" aria-checked="${TH.band===b}" aria-label="${l}" data-act="band" data-b="${b}" style="background:${c}"></button>`).join('')}<button class="sw swc" role="radio" aria-checked="${TH.band==='custom'}" aria-label="Any colour" data-act="band" data-b="custom"></button></div>
   <div id="cwp"></div>
-  <div class="seg" role="radiogroup" aria-label="Big calories number"><button class="segb ${TH.hero!==false?'on':''}" data-act="hero" data-h="1" aria-pressed="${TH.hero!==false}">Big calories left</button><button class="segb ${TH.hero===false?'on':''}" data-act="hero" data-h="0" aria-pressed="${TH.hero===false}">Four rings</button></div>
   <div class="seg" style="margin-bottom:0" role="radiogroup" aria-label="Light or dark">${[['light','Light'],['dark','Dark'],['auto','Match phone']].map(([m,l])=>`<button class="segb ${TH.mode===m?'on':''}" role="radio" aria-checked="${TH.mode===m}" data-act="mode" data-m="${m}">${l}</button>`).join('')}</div></div>
   <div class="sec" style="margin-top:24px">Voice: phrases it has learned</div>
   <div class="fgroup" id="phr">${phrasesHtml()}</div>
@@ -1288,17 +1370,18 @@ function saveGoals(){
 }
 
 // ---------- colour theme (stored on this phone only) ----------
-const BANDS=[['ink','Ink','#17181F'],['blue','Blue','#2457F5'],['teal','Teal','#0B7F6F'],['violet','Violet','#6D4AFF'],['orange','Orange','#E2581A']];
-let TH=Object.assign({band:'ink',mode:'light'},ls.get('fl_theme',{}));
+const BANDS=[['mono','Mono','#111113'],['cyan','Cyan','#00D7F0'],['violet','Violet','#8E7CFF'],['mint','Mint','#2FD4A0'],['coral','Coral','#FF6A55']];
+let TH=Object.assign({band:'mono',mode:'light'},ls.get('fl_theme',{}));
+{const old={ink:'mono',blue:'cyan',teal:'mint',orange:'coral'};if(old[TH.band]){TH.band=old[TH.band];ls.set('fl_theme',TH)}} /* earlier colour names */
 const okHex=h=>/^#[0-9a-f]{6}$/i.test(h||'');
-if(!(BANDS.some(b=>b[0]===TH.band)||(TH.band==='custom'&&okHex(TH.custom))))TH.band='ink';
+if(!(BANDS.some(b=>b[0]===TH.band)||(TH.band==='custom'&&okHex(TH.custom))))TH.band='mono';
 if(!['light','dark','auto'].includes(TH.mode))TH.mode='light';
 const darkQ=matchMedia('(prefers-color-scheme: dark)');
 function applyTheme(){
   const d=document.documentElement;d.dataset.band=TH.band;d.dataset.mode=TH.mode==='auto'?(darkQ.matches?'dark':'light'):TH.mode;
   const v=TH.band==='custom'?flVars(TH.custom,d.dataset.mode==='dark'):{};
   ['--band','--onband','--bandbtn','--acc','--onacc'].forEach(k=>v[k]?d.style.setProperty(k,v[k]):d.style.removeProperty(k));
-  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=getComputedStyle(d).getPropertyValue('--band').trim()||'#17181F'; // phone status bar matches the header
+  const m=document.querySelector('meta[name=theme-color]');if(m)m.content=getComputedStyle(d).getPropertyValue('--bg').trim()||'#FAFAFA'; // phone status bar matches the page
 }
 function setTheme(ch){
   if(ch.band==='custom'&&!okHex(TH.custom)&&!ch.custom)ch.custom=(BANDS.find(b=>b[0]===TH.band)||BANDS[1])[2]; // start the wheel on the colour you had
@@ -1353,6 +1436,7 @@ meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('[data-act=meal]').forEach(c=>{con
   lpAgain:()=>{const e=lpEntry();closeAll();if(e)setTimeout(()=>again({meal:e.meal,fid:e.foodId}),250)},
   lpDel:()=>{const e=lpEntry();if(!e)return closeAll();AM={fid:e.foodId,eid:e.id,meal:e.meal,qty:e.qty,was:e.qty};amDelete()},
   forget:d=>forgetPhrase(d.k),
+  more:d=>{EXP[d.meal]=true;render()},mealsum:d=>{MS=d.meal;nav(sheetMeal)},
   hero:d=>{TH.hero=d.h==='1';ls.set('fl_theme',TH);sheetEl.querySelectorAll('[data-act=hero]').forEach(b=>{const on=b.dataset.h===d.h;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});ringsGrown=null;render()},
   ffUnit:d=>ffUnit(d.u),ffSave,say:openSay,refresh:()=>{load();flush(true)},mic:()=>REC?micStop():micStart(),sayNext,sayLog,
   sayMeal:d=>{SY.meal=d.m;sheetEl.querySelectorAll('[data-act=sayMeal]').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m));sayRefresh()},
