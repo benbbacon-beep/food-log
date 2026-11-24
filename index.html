@@ -177,6 +177,26 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .meal .row .n div{font-weight:600;font-size:14.5px}
 .meal .row small{font-size:12.5px}
 .meal .ent>.row{gap:12px}
+.meal .row .n div{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.3}
+.meal .again{box-shadow:none;color:color-mix(in srgb,var(--dim) 75%,transparent);width:40px;height:40px}
+.meal .again svg{width:18px;height:18px}
+.meal .tot{white-space:normal}
+.srow{display:flex;align-items:center;gap:12px;padding:0 14px;min-height:50px;border-top:1px solid var(--line);font-size:15px;font-weight:600;color:var(--text);text-decoration:none}
+.srow:first-child{border-top:0}
+.srow span{flex:1}.srow em{font-style:normal;color:var(--dim);font-weight:500}.srow svg{color:var(--faint)}
+.prow{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 14px;border-top:1px solid var(--line)}
+.prow:first-child{border-top:0}
+.prow>div{flex:1;min-width:0}.prow b{display:block;font-size:14.5px}
+.prow small{display:block;font-size:12.5px;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prow .iconbtn{background:transparent;color:var(--faint)}
+.lpm{display:flex;flex-direction:column}
+.lpm>button{display:flex;align-items:center;gap:12px;padding:0 14px;min-height:52px;font-size:15px;font-weight:600;text-align:left;border-top:1px solid var(--line)}
+.lpm>button:first-child{border-top:0}
+.lpm svg{width:18px;height:18px;flex:none}
+.lpm .mi{width:26px;height:26px;border-radius:8px;margin-left:-4px}
+.lpm .mi svg{width:16px;height:16px}
+.lpm .danger{color:var(--bad)}
+.ent>.row.pressing{transform:scale(.98);transition:transform .45s ease}
 .meal .ftile{width:36px;height:36px;border-radius:11px}
 .ent.new{animation:rowIn .5s cubic-bezier(.2,.8,.2,1)}
 @keyframes rowIn{from{opacity:0;transform:translateY(-8px);background:color-mix(in srgb,var(--acc) 18%,transparent)}}
@@ -224,6 +244,9 @@ header .sub{display:block;font-size:13px;font-weight:500;opacity:.72;letter-spac
 .mchips{display:flex;gap:6px;margin:10px 0 0;overflow-x:auto;scrollbar-width:none}
 .mchip{padding:9px 14px;border-radius:18px;background:var(--card);color:var(--dim);font-size:13px;font-weight:600;flex:none;min-height:38px}
 .mchip.on{background:var(--acc);color:var(--onacc)}
+.cchips{margin-top:8px}
+.cchips .mchip{display:flex;align-items:center;gap:6px}
+.cchips svg{width:15px;height:15px}
 .seg{display:flex;background:var(--card2);border-radius:12px;padding:3px;margin:12px 0}
 .segb{flex:1;padding:9px 0;border-radius:10px;font-size:13.5px;font-weight:700;color:var(--dim)}
 .segb.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -364,7 +387,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='30';
+const APP_VERSION='31';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -609,6 +632,19 @@ function afterRender(ok,d){
   if(stickObs)stickObs.disconnect();
   if(mac&&st&&window.IntersectionObserver){stickObs=new IntersectionObserver(es=>st.classList.toggle('on',!es[0].isIntersecting),{threshold:0,rootMargin:'-40px 0px 0px 0px'});stickObs.observe(mac)}
 }
+// swipe the page left/right to change day (not on the swipeable cards, and only on a clearly sideways move)
+(function(){let x0=0,y0=0,axis=null,on=false;const app=()=>$('#app');
+  document.addEventListener('touchstart',e=>{if(STACK.length||e.touches.length>1||e.target.closest('.pages,.stick,input,textarea'))return;
+    on=true;axis=null;x0=e.touches[0].clientX;y0=e.touches[0].clientY},{passive:true});
+  document.addEventListener('touchmove',e=>{if(!on)return;const dx=e.touches[0].clientX-x0,dy=e.touches[0].clientY-y0;
+    if(!axis&&(Math.abs(dx)>12||Math.abs(dy)>12))axis=Math.abs(dx)>Math.abs(dy)*1.4?'x':'y';
+    if(axis==='x'){const lim=dx<0&&S.date===today()?0.15:0.45;app().style.transition='none';app().style.transform=`translateX(${dx*lim}px)`;app().style.opacity=String(1-Math.min(.35,Math.abs(dx)/900))}},{passive:true});
+  const end=e=>{if(!on)return;on=false;const a=app();const dx=(e.changedTouches&&e.changedTouches[0]?e.changedTouches[0].clientX:x0)-x0;
+    a.style.transition='transform .22s ease,opacity .22s ease';a.style.transform='';a.style.opacity='';
+    if(axis==='x'&&Math.abs(dx)>80&&(dx>0||S.date!==today())){go(dx>0?-1:1);
+      a.style.transition='none';a.style.transform=`translateX(${dx>0?-40:40}px)`;a.style.opacity='.4';requestAnimationFrame(()=>requestAnimationFrame(()=>{a.style.transition='transform .28s cubic-bezier(.2,.8,.2,1),opacity .28s';a.style.transform='';a.style.opacity=''}))}};
+  document.addEventListener('touchend',end);document.addEventListener('touchcancel',end);
+})();
 function render(){
   if((SW.on&&Date.now()-SW.since<5000)||SW.t){SW.pending=true;return} // a stuck touch never blocks for long
   const app=$('#app');
@@ -616,7 +652,7 @@ function render(){
   const isToday=S.date===today();
   const v=view(),ready=!!v,first=!v||(S.data.partial&&S.loading); // first = nothing trustworthy for this day yet
   const d=v||{goals:{},entries:[]},g=d.goals||{},t=totals(d.entries),unloaded=ready&&S.data.partial&&!S.loading;
-  let h=`<div class="band"></div><header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1><button class="hbtn" data-act="refresh" aria-label="Refresh. ${SYNC[syncState()][1]}">${isToday?'Today':nice(S.date)}<span class="sub"><i class="sync ${syncState()}" aria-hidden="true"></i>${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></button></h1>${isToday?'':`<button class="todaypill" data-act="today" aria-label="Back to today">${IC.back}Today</button>`}<button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Goals and settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
+  let h=`<div class="band"></div><header><button class="iconbtn" aria-label="Previous day" data-act="day" data-n="-1">${IC.left}</button><h1><button class="hbtn" data-act="refresh" aria-label="Refresh. ${SYNC[syncState()][1]}">${isToday?'Today':nice(S.date)}<span class="sub"><i class="sync ${syncState()}" aria-hidden="true"></i>${isToday?nice(S.date):(S.date===shift(today(),-1)?'Yesterday':'')}</span></button></h1>${isToday?'':`<button class="todaypill" data-act="today" aria-label="Back to today">${IC.back}Today</button>`}<button class="iconbtn" aria-label="Next day" data-act="day" data-n="1" ${isToday?'disabled':''}>${IC.right}</button><button class="iconbtn" aria-label="Settings" data-act="goals" ${ready?'':'disabled'}>${IC.gear}</button></header>`;
   h+=banners();
   if(TH.hero!==false){const gk=g.kcal||0,val=t.kcal,over=gk&&val>gk,left=over?val-gk:gk-val;
     h+=`<button class="herok" data-act="ring" data-k="kcal" ${ready?'':'disabled'} aria-label="Calories: ${ready&&!first?kc(val):'loading'} of ${kc(gk)}"><span class="hl">${first||!gk?'Calories today':over?'Calories over today':'Calories left today'}</span>
@@ -637,7 +673,8 @@ function render(){
   h+=`</div><div class="pg" aria-label="Goals chart">${chart(t,g,ready,false)}</div></div>${dots('top',2)}</div>`;
   for(const [m,label] of MEALS){
     const es=d.entries.filter(e=>e.meal===m),mt=totals(es);
-    const tot=es.length?'<b>'+kc(mt.kcal)+'</b> kcal · '+fmt(mt.net)+' g net':first?'<i class="sk" style="width:120px"></i>':unloaded?'Not loaded':'Nothing yet';
+    const times=es.map(e=>e.at?String(e.at).slice(11,16):'').filter(Boolean).sort(),span=times.length?(times[0]===times[times.length-1]?times[0]:times[0]+'–'+times[times.length-1]):'';
+    const tot=es.length?'<b>'+kc(mt.kcal)+'</b> kcal · '+fmt(mt.net)+' g net · '+r0(mt.protein)+' g protein'+(span?' · '+span:''):first?'<i class="sk" style="width:120px"></i>':unloaded?'Not loaded':'Nothing yet';
     const folded=es.length&&FOLD[m];
     h+=`<div class="card meal ${folded?'folded':''} ${!es.length&&!first?'slim':''}"><div class="mh"><button class="mtog" data-act="fold" data-meal="${m}" ${es.length?`aria-expanded="${!folded}"`:'disabled'}><span class="mi" style="--mc:var(--m-${m})">${MI[m]}</span><h2>${label}<span class="tot">${tot}</span></h2>${es.length?`<span class="chev">${IC.chev}</span>`:''}</button><button class="plus" aria-label="Add to ${label.toLowerCase()}" data-act="add" data-meal="${m}" ${ready?'':'disabled'}>${IC.plus}</button></div>`;
     if(!es.length)delete S.pg['m:'+m];
@@ -667,6 +704,30 @@ const foodOf=id=>{const r=realId(id);return view().foods.find(f=>f.id===r)};
 const kc=n=>r0(n).toLocaleString('en-GB');
 const FOLD=ls.get('fl_fold',{});
 function fold(m){FOLD[m]=!FOLD[m];ls.set('fl_fold',FOLD);render()}
+// ----- long-press a logged food: change amount, move, log again, delete -----
+let LP=null;
+(function(){let t=null,x0=0,y0=0,el=null;
+  const cancel=()=>{clearTimeout(t);t=null;if(el)el.classList.remove('pressing');el=null};
+  document.addEventListener('pointerdown',e=>{const r=e.target.closest('#app .meal .ent>.row[data-act=entry]');if(!r||STACK.length)return;
+    el=r;x0=e.clientX;y0=e.clientY;r.classList.add('pressing');
+    t=setTimeout(()=>{t=null;r.classList.remove('pressing');LP={id:r.dataset.id,swallow:true};setTimeout(()=>{if(LP)LP.swallow=false},700);if(navigator.vibrate)try{navigator.vibrate(12)}catch(_){};nav(sheetLong)},480)});
+  document.addEventListener('pointermove',e=>{if(t&&(Math.abs(e.clientX-x0)>8||Math.abs(e.clientY-y0)>8))cancel()});
+  ['pointerup','pointercancel','scroll'].forEach(ev=>document.addEventListener(ev,()=>{if(t)cancel()},true));
+  /* the tap that ends a long-press mustn't also open the amount screen */
+  document.addEventListener('click',e=>{if(LP&&LP.swallow&&e.target.closest('.ent>.row')){LP.swallow=false;e.stopPropagation();e.preventDefault()}},true);
+  document.addEventListener('contextmenu',e=>{if(e.target.closest('#app .meal .ent'))e.preventDefault()});
+})();
+function sheetLong(){
+  const e=LP&&view().entries.find(x=>x.id===LP.id);if(!e)return back();
+  const f=foodOf(e.foodId);
+  sheetEl.innerHTML=head(esc(cut(e.food,30)))+`<div class="sh-body"><div class="hint" style="margin:-4px 2px 10px">${fmt(e.qty)} ${esc(e.unit)} · ${kc(e.kcal)} kcal · ${fmt(e.net)} g net · ${mealName(e.meal)}</div>
+  <div class="fgroup lpm">
+  <button data-act="lpAmount">${svg('<path d="M4 20h4L19 9l-4-4L4 16z"/>',18)}Change amount</button>
+  ${MEALS.filter(([m])=>m!==e.meal).map(([m,l])=>`<button data-act="lpMove" data-m="${m}"><span class="mi" style="--mc:var(--m-${m})">${MI[m]}</span>Move to ${l==='Snacks'?'snacks':l.toLowerCase()}</button>`).join('')}
+  ${f?`<button data-act="lpAgain">${IC.plus}Log again · ${fmt(usualQty(f))} ${esc(f.label)}</button>`:''}
+  <button class="danger" data-act="lpDel">${svg('<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',18)}Delete</button></div></div>`;
+}
+function lpEntry(){return LP&&view().entries.find(x=>x.id===LP.id)}
 // one tap on a row's +: the usual amount of that food again, same meal
 let lastAgain=[null,0];
 function again(d){
@@ -774,6 +835,7 @@ function openAdd(meal){AD={meal:meal||mealNow(),q:'',added:[]};nav(sheetAdd)}
 function sheetAdd(){
   sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${mealName(AD.meal)}${S.date===today()?'':' · '+nice(S.date)}</h3><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><div class="sbox">${IC.search}<input class="search" id="q" placeholder="Search your foods" aria-label="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"></div>
   <div class="mchips" role="radiogroup" aria-label="Meal">${MEALS.map(([m,l])=>`<button class="mchip ${m===AD.meal?'on':''}" role="radio" aria-checked="${m===AD.meal}" data-act="adMeal" data-m="${m}">${l==='Snacks'?'Snack':l}</button>`).join('')}</div>
+  <div class="mchips cchips" role="radiogroup" aria-label="Type of food">${CATS.filter(c=>view().foods.some(f=>inCat(f,c[0]))).map(([c,l,,k])=>`<button class="mchip ${AD.cat===c?'on':''}" role="radio" aria-checked="${AD.cat===c}" data-act="adCat" data-c="${c}">${svg(FI.find(x=>x[0]===k)[2],15)}${l}</button>`).join('')}</div>
   <div id="added"></div><div id="flist"></div></div>`;
   $('#q').addEventListener('input',e=>{AD.q=e.target.value;listFoods()});
   listFoods();
@@ -787,18 +849,18 @@ function usualAt(meal){
 function listFoods(){
   if(!$('#flist'))return;
   const v=view(),words=norm(AD.q).split(/\s+/).filter(Boolean);
-  let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
+  let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))&&(!AD.cat||inCat(f,AD.cat))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
   // then near misses: typos ("avacado") and everyday names ("almond milk"), after the exact matches
-  const close=words.length&&window.FLSay?FLSay.search(AD.q,v.foods).filter(f=>!fs.includes(f)):[];
+  const close=words.length&&window.FLSay?FLSay.search(AD.q,v.foods).filter(f=>!fs.includes(f)&&(!AD.cat||inCat(f,AD.cat))):[];
   const row=f=>{const q=usualQty(f),k=q/f.per;return `<div class="row frow">${tileOf(f)}<button class="n" data-act="pick" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${fmt(q)} ${esc(f.label)} · ${r0(f.kcal*k)} kcal · ${fmt(f.net*k)} g net</small></button><button class="plus" aria-label="Add ${fmt(q)} ${esc(f.label)} of ${esc(f.name)}" data-act="quick" data-id="${esc(f.id)}">${IC.plus}</button></div>`};
   const mine=v.entries.filter(e=>AD.added.includes(e.id));
   $('#added').innerHTML=mine.length?`<div class="added"><span>Added</span>${mine.map(e=>`<button class="pill" data-act="entry" data-id="${esc(e.id)}">${esc(cut(e.food,18))} · ${fmt(e.qty)} ${esc(e.unit)}</button>`).join('')}</div>`:'';
   let usual=[];
-  if(!words.length){const n=usualAt(AD.meal),here=new Set(v.entries.filter(e=>e.meal===AD.meal).map(e=>e.foodId));
+  if(!words.length&&!AD.cat){const n=usualAt(AD.meal),here=new Set(v.entries.filter(e=>e.meal===AD.meal).map(e=>e.foodId));
     usual=fs.filter(f=>n[f.id]>=2&&!here.has(f.id)).sort((a,b)=>n[b.id]-n[a.id]).slice(0,3)}
   const rest=fs.filter(f=>!usual.includes(f));
   $('#flist').innerHTML=!fs.length&&!close.length?`<div class="nomatch"><span class="nmi">${IC.search}</span><b>“${esc(cut(AD.q.trim(),28))}” isn't in your foods yet</b><span>Add it once and it's here for next time.</span><button class="primary" data-act="newFoodScan">${IC.cam} Scan its label</button><button class="secondary" data-act="newFood">Type it in</button></div>`
-    :(usual.length?`<div class="sec">Usual for ${mealName(AD.meal)}</div><div class="fgroup">${usual.map(row).join('')}</div><div class="sec">All foods, most used first</div>`:'')+(rest.length?`<div class="fgroup">${rest.map(row).join('')}</div>`:'')
+    :(AD.cat&&!words.length?`<div class="sec">${CATS.find(c=>c[0]===AD.cat)[1]} · ${fs.length} food${fs.length===1?'':'s'}</div>`:'')+(usual.length?`<div class="sec">Usual for ${mealName(AD.meal)}</div><div class="fgroup">${usual.map(row).join('')}</div><div class="sec">All foods, most used first</div>`:'')+(rest.length?`<div class="fgroup">${rest.map(row).join('')}</div>`:'')
     +(close.length?(fs.length?'<div class="sec">Close matches</div>':'')+`<div class="fgroup">${close.map(row).join('')}</div>`:'');
 }
 // a food's tile: a small icon for what it is (picked from words in its name; first match wins, so "almond butter" is a nut
@@ -820,8 +882,12 @@ const FI=[
   ['broth',/(broth|soup|stock)/,'<path d="M3 11h18a9 9 0 0 1-18 0z"/><path d="M8 7c0-1 1-1 1-2M12 7c0-1 1-1 1-2M16 7c0-1 1-1 1-2"/>'],
   ['fruit',/(berr|raspberr|strawberr|blueberr|apple|lemon|lime|cherr|orange\b)/,'<circle cx="8" cy="16" r="4"/><circle cx="16" cy="16" r="4"/><path d="M8 12c0-4 2-7 5-8M16 12c0-3-1-6-3-8"/>'],
   ['veg',/(lettuce|spinach|cabbage|celery|mushroom|kale|greens|tomato|radish|sauerkraut|pickle|avocado|olive|cucumber|pepper|onion|broccoli|cauliflower|courgette|asparagus|tofu|salad|rocket)/,'<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l8-8"/>']];
-const FICACHE={};
-function iconOf(name){const n=norm(name||'');if(n in FICACHE)return FICACHE[n];const hit=FI.find(x=>x[1].test(n));return FICACHE[n]=hit?svg(hit[2],18):null}
+const FICACHE={},FKCACHE={};
+const kindOf=name=>{const n=norm(name||'');if(!(n in FKCACHE)){const hit=FI.find(x=>x[1].test(n));FKCACHE[n]=hit?hit[0]:''}return FKCACHE[n]};
+function iconOf(name){const k=kindOf(name);if(!k)return null;return FICACHE[k]||(FICACHE[k]=svg(FI.find(x=>x[0]===k)[2],18))}
+// filter chips for the + list: each groups one or more icon kinds
+const CATS=[['dairy','Dairy',['cheese','milk','cream','butter'],'cheese'],['meat','Meat',['meat'],'meat'],['fish','Fish',['fish'],'fish'],['egg','Eggs',['egg'],'egg'],['oil','Oils',['oil'],'oil'],['nut','Nuts',['nut'],'nut'],['veg','Veg &amp; fruit',['veg','fruit'],'veg'],['sauce','Sauces',['sauce'],'sauce'],['snack','Snacks',['snack'],'snack'],['powder','Protein',['powder'],'powder']];
+const inCat=(f,c)=>{const cat=CATS.find(x=>x[0]===c);return !cat||cat[2].includes(kindOf(f.name))};
 function tileOf(f){const kf=(f.fat||0)*9,kp=(f.protein||0)*4,kn=(f.net||0)*4,c=!(kf+kp+kn)?'--dim':kp>kf&&kp>=kn?'--pro':kn>kf&&kn>kp?'--net':'--fat';
   return `<span class="ftile" aria-hidden="true" style="--tc:var(${c})">${iconOf(f.name)||esc(((f.name||'').match(/[A-Za-z0-9]/)||['?'])[0].toUpperCase())}</span>`}
 // one tap: log the usual amount and stay in the list
@@ -965,6 +1031,20 @@ function ffRegion(r){
   sheetEl.querySelectorAll('[data-act=ffRegion]').forEach(b=>b.classList.toggle('on',b.dataset.r===r));
 }
 
+// learned voice phrases, shown in Settings. Removing one is kept on the phone (fl_alias_off) so the sheet's backup
+// can't bring it back; the backup row stays until the back end can delete it.
+const ALIAS_OFF=ls.get('fl_alias_off',{});
+function phrasesHtml(){
+  const keys=Object.keys(ALIAS).filter(k=>ALIAS[k]&&!ALIAS_OFF[k]).sort();
+  if(!keys.length)return '<div class="srow"><span style="color:var(--faint)">Nothing learned yet</span></div>';
+  return keys.map(k=>{const f=view().foods.find(x=>x.id===ALIAS[k]);return `<div class="prow"><div><b>“${esc(k)}”</b><small>means ${esc(f?f.name:'a food no longer in your list')}</small></div><button class="iconbtn" aria-label="Forget ${esc(k)}" data-act="forget" data-k="${esc(k)}">${IC.x}</button></div>`}).join('');
+}
+function forgetPhrase(k){
+  const was=ALIAS[k];delete ALIAS[k];ALIAS_OFF[k]=1;ls.set('fl_alias',ALIAS);ls.set('fl_alias_off',ALIAS_OFF);
+  const el=$('#phr');if(el)el.innerHTML=phrasesHtml();
+  toast('Forgot “'+cut(k,20)+'”','Undo',()=>{ALIAS[k]=was;delete ALIAS_OFF[k];ls.set('fl_alias',ALIAS);ls.set('fl_alias_off',ALIAS_OFF);const e2=$('#phr');if(e2)e2.innerHTML=phrasesHtml()});
+}
+
 // ----- say what you ate: speak or type, check, then log -----
 let SY=null,REC=null;
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -973,7 +1053,7 @@ const ALIAS=ls.get('fl_alias',{}); // phrases he's taught it: "almond milk" -> f
 // (e.g. after Chrome's data is cleared); phrases the sheet lacks or has differently are sent up.
 function syncAliases(srv){
   if(!srv||typeof srv!=='object'||Q.some(j=>j.action==='saveAliases'))return;
-  let got=false;for(const k in srv)if(!(k in ALIAS)){ALIAS[k]=srv[k];got=true}
+  let got=false;for(const k in srv)if(!(k in ALIAS)&&!ALIAS_OFF[k]){ALIAS[k]=srv[k];got=true}
   if(got)ls.set('fl_alias',ALIAS);
   const up={};for(const k in ALIAS)if(srv[k]!==ALIAS[k])up[k]=ALIAS[k];
   if(Object.keys(up).length)submit({action:'saveAliases',map:up});
@@ -1054,6 +1134,7 @@ function sayChoose(id){
 }
 function setRowFood(r,f){
   r.food=f;r.sure=true;FLSay.amount(r);
+  if(r.key&&ALIAS_OFF[r.key]){delete ALIAS_OFF[r.key];ls.set('fl_alias_off',ALIAS_OFF)} /* taught again: it counts again */
   if(r.key&&!String(f.id).startsWith('tmp')&&ALIAS[r.key]!==f.id){ALIAS[r.key]=f.id;ls.set('fl_alias',ALIAS);submit({action:'saveAliases',map:{[r.key]:f.id}})} // remember: next time this phrase means this food (and back it up to the sheet)
 }
 function sayLog(){
@@ -1172,7 +1253,7 @@ function sheetRing(){
 // ----- goals -----
 function sheetGoals(){
   const v=view(),g=v.goals||{};
-  sheetEl.innerHTML=head('Goals and settings')+`<div class="sh-body form">
+  sheetEl.innerHTML=head('Settings')+`<div class="sh-body form">
   <div class="sec" style="margin-top:4px">Daily goals</div>
   <div class="fgroup">${[['kcal','Calories','kcal','--kcal'],['net','Net carbs','g','--net'],['protein','Protein','g','--pro'],['fat','Fat','g','--fat']].map(([k,l,u,c])=>`<div class="grow"><i style="background:var(${c})"></i><label for="g_${k}">${l}</label><input id="g_${k}" inputmode="decimal" value="${g[k]??''}"><em>${u}</em></div>`).join('')}</div>
   <div class="hint" style="margin:8px 4px 0">Change protein, net carbs or fat and calories follow (4 kcal per g of protein or carbs, 9 per g of fat); you can still type calories yourself. New goals start today; past days keep theirs.</div>
@@ -1183,8 +1264,12 @@ function sheetGoals(){
   <div id="cwp"></div>
   <div class="seg" role="radiogroup" aria-label="Big calories number"><button class="segb ${TH.hero!==false?'on':''}" data-act="hero" data-h="1" aria-pressed="${TH.hero!==false}">Big calories left</button><button class="segb ${TH.hero===false?'on':''}" data-act="hero" data-h="0" aria-pressed="${TH.hero===false}">Four rings</button></div>
   <div class="seg" style="margin-bottom:0" role="radiogroup" aria-label="Light or dark">${[['light','Light'],['dark','Dark'],['auto','Match phone']].map(([m,l])=>`<button class="segb ${TH.mode===m?'on':''}" role="radio" aria-checked="${TH.mode===m}" data-act="mode" data-m="${m}">${l}</button>`).join('')}</div></div>
-  ${v.sheetUrl?`<a class="secondary" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener">Open the sheet (export from there)</a>`:''}
-  <div class="hint" style="text-align:center;margin-top:14px">Food Log v${APP_VERSION}</div></div>`;
+  <div class="sec" style="margin-top:24px">Voice: phrases it has learned</div>
+  <div class="fgroup" id="phr">${phrasesHtml()}</div>
+  <div class="hint" style="margin:8px 4px 0">When you correct a voice match, it remembers what you said. Remove one it learned wrong and it'll guess again next time.</div>
+  <div class="sec" style="margin-top:24px">Data</div>
+  <div class="fgroup">${v.sheetUrl?`<a class="srow" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener"><span>Open the sheet</span>${IC.right}</a>`:''}<div class="srow"><span>Foods in your list</span><em>${v.foods.length}</em></div><div class="srow"><span>Version</span><em>${APP_VERSION}</em></div></div>
+  </div>`;
   if(TH.band==='custom')wheel($('#cwp'));
   // calories move by what each macro change is worth, so a goal set by hand keeps its offset
   const num=k=>{const s=$('#g_'+k).value.trim().replace(',','.');return s===''?NaN:Number(s)};
@@ -1261,7 +1346,13 @@ const ACT={
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),newFoodScan:()=>{openFoodForm(null,AD.q.trim());startScan(false)},pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('[data-act=meal]').forEach(c=>{const on=c.dataset.m===d.m;c.classList.toggle('on',on);c.setAttribute('aria-pressed',on)})},
   adMeal:d=>{AD.meal=d.m;sheetAdd()},
+  adCat:d=>{AD.cat=AD.cat===d.c?null:d.c;sheetEl.querySelectorAll('[data-act=adCat]').forEach(b=>{const on=b.dataset.c===AD.cat;b.classList.toggle('on',on);b.setAttribute('aria-checked',on)});listFoods()},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
+  lpAmount:()=>{const e=lpEntry();if(!e)return closeAll();AM={fid:e.foodId,eid:e.id,meal:e.meal,qty:r2(e.qty),was:r2(e.qty)};navReplace(sheetAmount)},
+  lpMove:d=>{const e=lpEntry();if(!e)return closeAll();const from=e.meal;submit({action:'edit',id:e.id,meal:d.m});closeAll();toast('Moved to '+mealName(d.m),'Undo',()=>submit({action:'edit',id:e.id,meal:from}))},
+  lpAgain:()=>{const e=lpEntry();closeAll();if(e)setTimeout(()=>again({meal:e.meal,fid:e.foodId}),250)},
+  lpDel:()=>{const e=lpEntry();if(!e)return closeAll();AM={fid:e.foodId,eid:e.id,meal:e.meal,qty:e.qty,was:e.qty};amDelete()},
+  forget:d=>forgetPhrase(d.k),
   hero:d=>{TH.hero=d.h==='1';ls.set('fl_theme',TH);sheetEl.querySelectorAll('[data-act=hero]').forEach(b=>{const on=b.dataset.h===d.h;b.classList.toggle('on',on);b.setAttribute('aria-pressed',on)});ringsGrown=null;render()},
   ffUnit:d=>ffUnit(d.u),ffSave,say:openSay,refresh:()=>{load();flush(true)},mic:()=>REC?micStop():micStart(),sayNext,sayLog,
   sayMeal:d=>{SY.meal=d.m;sheetEl.querySelectorAll('[data-act=sayMeal]').forEach(c=>c.classList.toggle('on',c.dataset.m===d.m));sayRefresh()},
