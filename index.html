@@ -25,7 +25,7 @@ if(band==='custom'&&/^#[0-9a-f]{6}$/i.test(t.custom||'')){var v=flVars(t.custom,
 <style>
 @font-face{font-family:Jakarta;src:url(jakarta.woff2) format('woff2');font-weight:200 800;font-display:swap}
 /* light (default) */
-:root{--bg:#FAFAFA;--card:#FFFFFF;--card2:#F1F1F3;--line:#EBEBEE;--text:#111113;--dim:#5F5F68;--faint:#82828B;--bad:#E0243A;--warn:#9A5B00;
+:root{--bg:#F3F3F5;--card:#FFFFFF;--card2:#F1F1F3;--line:#EBEBEE;--text:#111113;--dim:#5F5F68;--faint:#82828B;--bad:#E0243A;--warn:#9A5B00;
 --kcal:#AF52DE;--net:#FF9500;--pro:#007AFF;--fat:#34C759;--tint:16%;
 --band:#17181F;--onband:#FFFFFF;--bandbtn:rgba(255,255,255,.14);--acc:#111114;--onacc:#FFFFFF;--link:#0062D6;
 --shadow:0 1px 3px rgba(0,0,0,.04),0 4px 14px rgba(0,0,0,.05);--shadow2:0 6px 24px rgba(0,0,0,.10);--scrim:rgba(0,0,0,.35);
@@ -456,6 +456,32 @@ input[type=number]{-moz-appearance:textfield}
 .qbox input{width:100%;text-align:center;font-size:56px;letter-spacing:-2px;line-height:1.1}
 .qbox span{flex:none;text-align:center;font-size:15px}
 .step{width:52px;height:52px;border-radius:26px;background:var(--card2)}
+/* ===== cards with borders (v33) ===== */
+.wrap.calm{padding-left:16px;padding-right:16px}
+.calm .top{margin:0 -6px}
+.calm .hero2,.calm .m3,.calm .ms{background:var(--card);border:1px solid var(--line);border-radius:22px}
+.calm .hero2{padding:18px 18px 16px;margin-top:6px}
+.calm .hero2 b{font-size:54px}
+.calm .mac3{gap:10px;margin-top:10px}
+.calm .m3{border-radius:18px;padding:12px 12px 11px}
+.calm .m3 .v b{font-size:18px}
+.calm .rule{display:none}
+.calm .ms{padding:14px 18px 8px;margin-top:10px}
+.calm .ms:first-of-type{margin-top:16px}
+.calm .ms.none{padding:10px 12px 10px 18px}
+.calm .ms.none .msh h2{font-size:18px}
+.sheet{background:var(--card)}
+.amchips{justify-content:center;margin:4px 0 6px}
+.qarow{display:flex;align-items:center;gap:12px;width:100%;text-align:left;margin-top:12px;padding:10px 14px;border:1px dashed var(--line);border-radius:16px}
+.qarow .qai{width:32px;height:32px;border-radius:16px;background:var(--card2);display:grid;place-items:center;flex:none}
+.qarow .qai svg{width:16px;height:16px}
+.qarow b{display:block;font-size:14.5px;font-weight:700}
+.qarow small{display:block;font-size:12.5px;color:var(--faint)}
+.qdot{display:block;width:9px;height:9px;border-radius:5px;margin:auto}
+.qanote{font-size:13px;color:var(--faint);margin:10px 2px 16px}
+.calm .ms .plus{width:36px;height:36px;border-radius:18px}
+.calm .more{padding:11px 0 6px}
+.hero2 b,.m3 .v b,.calm .ent .m b,.mtot{font-variant-numeric:tabular-nums}
 @media (prefers-reduced-motion:reduce){#splash .sp-arc,#splash .sp-dot,#app.in,.ent.new{animation:none!important}}
 @media (prefers-reduced-motion:reduce){.sheet,.scrim{transition:none!important}.rings.grow .arc,.rings.grow .tip,.rings.grow .seg,.sk{animation:none!important}}
 </style>
@@ -467,7 +493,7 @@ input[type=number]{-moz-appearance:textfield}
 <div class="toast" id="toast" role="status"></div>
 <script src="say.js"></script>
 <script>
-const APP_VERSION='32';
+const APP_VERSION='33';
 const MEALS=[['breakfast','Breakfast'],['lunch','Lunch'],['dinner','Dinner'],['snack','Snacks']];
 const mealName=m=>((MEALS.find(x=>x[0]===m)||[0,m])[1]).toLowerCase();
 // key, label, unit, colour, isCap (a limit to stay under, not a target to reach)
@@ -918,7 +944,8 @@ function openAdd(meal){AD={meal:meal||mealNow(),q:'',added:[]};nav(sheetAdd)}
 function sheetAdd(){
   sheetEl.innerHTML=`<div class="grab"></div><div class="sh-head"><h3>Add to ${mealName(AD.meal)}${S.date===today()?'':' · '+nice(S.date)}</h3><button class="link" data-act="newFood">New food</button><button class="done" data-act="done">Done</button></div><div class="sh-body"><div class="sbox">${IC.search}<input class="search" id="q" placeholder="Search your foods" aria-label="Search your foods" autocomplete="off" enterkeyhint="search" value="${esc(AD.q)}"></div>
   <div class="mchips" role="radiogroup" aria-label="Meal">${MEALS.map(([m,l])=>`<button class="mchip ${m===AD.meal?'on':''}" role="radio" aria-checked="${m===AD.meal}" data-act="adMeal" data-m="${m}">${l==='Snacks'?'Snack':l}</button>`).join('')}</div>
-  <div class="mchips cchips" role="radiogroup" aria-label="Type of food">${CATS.filter(c=>view().foods.some(f=>inCat(f,c[0]))).map(([c,l,,k])=>`<button class="mchip ${AD.cat===c?'on':''}" role="radio" aria-checked="${AD.cat===c}" data-act="adCat" data-c="${c}">${svg(FI.find(x=>x[0]===k)[2],15)}${l}</button>`).join('')}</div>
+  <div class="mchips cchips" role="radiogroup" aria-label="Type of food">${CATS.filter(c=>view().foods.some(f=>!isQuick(f)&&inCat(f,c[0]))).map(([c,l,,k])=>`<button class="mchip ${AD.cat===c?'on':''}" role="radio" aria-checked="${AD.cat===c}" data-act="adCat" data-c="${c}">${svg(FI.find(x=>x[0]===k)[2],15)}${l}</button>`).join('')}</div>
+  <button class="qarow" data-act="quickMacro"><span class="qai">${IC.plus}</span><span><b>Quick add</b><small>Just grams of net carbs, protein or fat</small></span></button>
   <div id="added"></div><div id="flist"></div></div>`;
   $('#q').addEventListener('input',e=>{AD.q=e.target.value;listFoods()});
   listFoods();
@@ -932,9 +959,9 @@ function usualAt(meal){
 function listFoods(){
   if(!$('#flist'))return;
   const v=view(),words=norm(AD.q).split(/\s+/).filter(Boolean);
-  let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))&&(!AD.cat||inCat(f,AD.cat))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
+  let fs=v.foods.filter(f=>{const n=norm(f.name);return !isQuick(f)&&words.every(w=>n.includes(w))&&(!AD.cat||inCat(f,AD.cat))}).sort((a,b)=>(b.uses-a.uses)||a.name.localeCompare(b.name));
   // then near misses: typos ("avacado") and everyday names ("almond milk"), after the exact matches
-  const close=words.length&&window.FLSay?FLSay.search(AD.q,v.foods).filter(f=>!fs.includes(f)&&(!AD.cat||inCat(f,AD.cat))):[];
+  const close=words.length&&window.FLSay?FLSay.search(AD.q,v.foods).filter(f=>!isQuick(f)&&!fs.includes(f)&&(!AD.cat||inCat(f,AD.cat))):[];
   const row=f=>{const q=usualQty(f),k=q/f.per;return `<div class="row frow">${tileOf(f)}<button class="n" data-act="pick" data-id="${esc(f.id)}"><div>${esc(f.name)}</div><small>${fmt(q)} ${esc(f.label)} · ${r0(f.kcal*k)} kcal · ${fmt(f.net*k)} g net</small></button><button class="plus" aria-label="Add ${fmt(q)} ${esc(f.label)} of ${esc(f.name)}" data-act="quick" data-id="${esc(f.id)}">${IC.plus}</button></div>`};
   const mine=v.entries.filter(e=>AD.added.includes(e.id));
   $('#added').innerHTML=mine.length?`<div class="added"><span>Added</span>${mine.map(e=>`<button class="pill" data-act="entry" data-id="${esc(e.id)}">${esc(cut(e.food,18))} · ${fmt(e.qty)} ${esc(e.unit)}</button>`).join('')}</div>`:'';
@@ -972,7 +999,7 @@ function iconOf(name){const k=kindOf(name);if(!k)return null;return FICACHE[k]||
 const CATS=[['dairy','Dairy',['cheese','milk','cream','butter'],'cheese'],['meat','Meat',['meat'],'meat'],['fish','Fish',['fish'],'fish'],['egg','Eggs',['egg'],'egg'],['oil','Oils',['oil'],'oil'],['nut','Nuts',['nut'],'nut'],['veg','Veg &amp; fruit',['veg','fruit'],'veg'],['sauce','Sauces',['sauce'],'sauce'],['snack','Snacks',['snack'],'snack'],['powder','Protein',['powder'],'powder']];
 const inCat=(f,c)=>{const cat=CATS.find(x=>x[0]===c);return !cat||cat[2].includes(kindOf(f.name))};
 function tileOf(f){const kf=(f.fat||0)*9,kp=(f.protein||0)*4,kn=(f.net||0)*4,c=!(kf+kp+kn)?'--dim':kp>kf&&kp>=kn?'--pro':kn>kf&&kn>kp?'--net':'--fat';
-  return `<span class="ftile" aria-hidden="true" style="--tc:var(${c})">${iconOf(f.name)||esc(((f.name||'').match(/[A-Za-z0-9]/)||['?'])[0].toUpperCase())}</span>`}
+  return `<span class="ftile" aria-hidden="true" style="--tc:var(${c})">${isQuick(f)?`<i class="qdot" style="background:var(${c})"></i>`:iconOf(f.name)||esc(((f.name||'').match(/[A-Za-z0-9]/)||['?'])[0].toUpperCase())}</span>`}
 // one tap: log the usual amount and stay in the list
 function logFood(f,qty,meal){
   const cid=newCid();AD.added.push(cid);
@@ -1001,6 +1028,38 @@ let AM=null;
 function pick(id){const f=view().foods.find(x=>x.id===id);if(!f)return;AM={fid:id,eid:null,meal:AD.meal,qty:f.defQty||(f.unit==='serving'?1:100),fresh:true};nav(sheetAmount)}
 function openEntry(id){const e=view().entries.find(x=>x.id===id);if(!e)return;AM={fid:e.foodId,eid:id,meal:e.meal,qty:r2(e.qty),was:r2(e.qty)};nav(sheetAmount)}
 function amParts(){const v=view(),e=AM.eid?v.entries.find(x=>x.id===AM.eid):null,fid=realId(AM.fid),f=v.foods.find(x=>x.id===fid);return{e,f}}
+// quick add: a few grams of net carbs, protein or fat with no food behind them. Each macro is a plain
+// food in the sheet ("Quick add: net carbs", per 100 g), made the first time it's used and kept out of every list
+const QUICK=[['net','Net carbs','--net',{kcal:400,net:100,protein:0,fat:0}],['protein','Protein','--pro',{kcal:400,net:0,protein:100,fat:0}],['fat','Fat','--fat',{kcal:900,net:0,protein:0,fat:100}]];
+const quickName=l=>'Quick add: '+l.toLowerCase();
+const isQuick=f=>/^Quick add: /i.test((f&&f.name)||'');
+let QA={meal:'lunch'};
+function openQuick(){QA={meal:AD.meal||mealNow()};nav(sheetQuick)}
+function sheetQuick(){
+  sheetEl.innerHTML=head('Quick add')+`<div class="sh-body form">
+  <div class="mchips" role="radiogroup" aria-label="Meal">${MEALS.map(([m,l])=>`<button class="mchip ${m===QA.meal?'on':''}" role="radio" aria-checked="${m===QA.meal}" data-act="qaMeal" data-m="${m}">${l==='Snacks'?'Snack':l}</button>`).join('')}</div>
+  <div class="fgroup" style="margin-top:14px">${QUICK.map(([k,l,c])=>`<div class="grow"><i style="background:var(${c})"></i><label for="qa_${k}">${l}</label><input class="ginp" id="qa_${k}" inputmode="decimal" placeholder="0" autocomplete="off"><em>g</em></div>`).join('')}</div>
+  <p class="qanote" id="qa_k">Adds the calories too: 4 per gram of carbs or protein, 9 per gram of fat.</p>
+  <button class="primary" data-act="qaSave">Add to ${mealName(QA.meal).toLowerCase()}</button></div>`;
+  const upd=()=>{const g=qaVals(),k=g.reduce((a,[q,d])=>a+q*d.kcal/100,0);$('#qa_k').textContent=k>0?`That's ${r0(k)} kcal as well.`:'Adds the calories too: 4 per gram of carbs or protein, 9 per gram of fat.'};
+  QUICK.forEach(([k])=>$('#qa_'+k).addEventListener('input',upd));
+  setTimeout(()=>{const i=$('#qa_net');if(i)i.focus()},250);
+}
+function qaVals(){return QUICK.map(([k,l,,d])=>{const el=$('#qa_'+k),n=el?Number(el.value.trim().replace(',','.')):0;return [n>0?r2(n):0,d,l]}).filter(([q])=>q>0)}
+function quickSave(){
+  const vals=qaVals();if(!vals.length)return toast('Type how many grams');
+  if(vals.some(([q])=>q>1000))return toast('That looks too big');
+  const cids=[];
+  for(const [q,d,l] of vals){
+    const name=quickName(l);let f=view().foods.find(x=>x.name===name);
+    if(!f){const food=Object.assign({name,unit:'g',label:'g',defQty:1},d);f=Object.assign({id:'tmp'+Date.now().toString(36)+l.length,uses:0,per:100},food);submit({action:'saveFood',food,tmpFood:f})}
+    const cid=newCid();cids.push(cid);AD.added.push(cid);
+    submit({action:'add',cid,date:S.date,meal:QA.meal,foodId:f.id,qty:q});
+  }
+  if(navigator.vibrate)navigator.vibrate(8);
+  back();
+  toast('Added '+vals.map(([q,,l])=>fmt(q)+' g '+(l==='Net carbs'?'net carbs':l.toLowerCase())).join(', '),'Undo',()=>cids.forEach(undoAdd));
+}
 function sheetAmount(){
   const {e,f}=amParts();
   if(!e&&!f){sheetEl.innerHTML=head('Not found')+'<div class="sh-body"><div class="empty">That item is no longer there.</div></div>';return}
@@ -1009,7 +1068,7 @@ function sheetAmount(){
   ${f?`<div class="hint">${perText(f)}: ${r0(f.kcal)} kcal · fat ${fmt(f.fat)} · protein ${fmt(f.protein)} · net ${fmt(f.net)} g</div>`:''}
   <div class="qty"><button class="step" aria-label="1 ${esc(unit)} less" data-n="-1">−</button><div class="qbox"><input id="qty" type="number" inputmode="decimal" step="any" min="0" enterkeyhint="done" aria-label="Amount in ${esc(unit)}" value="${AM.qty}"><span>${esc(unit)}</span></div><button class="step" aria-label="1 ${esc(unit)} more" data-n="1">+</button></div>
   <div class="macros" id="amm"></div>
-  <div class="chips four">${MEALS.map(([m,l])=>`<button class="chip mealc ${m===AM.meal?'on':''}" style="--mc:var(--m-${m})" data-act="meal" data-m="${m}" aria-pressed="${m===AM.meal}">${MI[m]}<span>${l==='Snacks'?'Snack':l}</span></button>`).join('')}</div>
+  <div class="mchips amchips" role="group" aria-label="Meal">${MEALS.map(([m,l])=>`<button class="mchip ${m===AM.meal?'on':''}" data-act="meal" data-m="${m}" aria-pressed="${m===AM.meal}">${l==='Snacks'?'Snack':l}</button>`).join('')}</div>
   <button class="primary" id="amgo" data-act="amSave">${e?'Save':'Add'}</button>
   ${e?`<button class="secondary danger" data-act="amDelete">Delete entry</button>`
      :`<div class="links"><button class="link" data-act="editFood">Edit food</button><button class="link danger" data-act="hideFood">Remove from list</button></div>`}
@@ -1166,7 +1225,7 @@ function micStart(){
 function micStop(){if(REC){const r=REC;r._manual=true;REC=null;try{r.stop()}catch(e){}micShow()}}
 function sayNext(){
   micStop();const txt=(SY.text||'').trim();if(!txt)return toast('Say or type what you had');
-  const p=FLSay.parse(txt,view().foods,ALIAS,mealNow());
+  const p=FLSay.parse(txt,view().foods.filter(f=>!isQuick(f)),ALIAS,mealNow());
   SY.meal=p.meal;SY.rows=p.rows;
   if(!p.rows.length)return toast("Couldn't find a food in that");
   nav(sheetSayCheck);
@@ -1204,7 +1263,7 @@ function sheetSayPick(){
   sheetEl.innerHTML=head('Which food?')+`<div class="sh-body"><input class="search" id="spq" value="${esc(r.phrase)}" placeholder="Search your foods" autocomplete="off" enterkeyhint="search">
   <div id="spl"></div><button class="secondary" data-act="sayNew">New food “${esc(cut(r.phrase,24))}”</button></div>`;
   const q=$('#spq'),draw=()=>{const v=view(),words=norm(q.value).split(/\s+/).filter(Boolean);
-    let fs=v.foods.filter(f=>{const n=norm(f.name);return words.every(w=>n.includes(w))});
+    let fs=v.foods.filter(f=>{const n=norm(f.name);return !isQuick(f)&&words.every(w=>n.includes(w))});
     if(q.value.trim()===r.phrase){const ranked=[r.food,...r.alts].filter(Boolean).map(f=>v.foods.find(x=>x.id===f.id)||f);fs=ranked.concat(fs.filter(f=>!ranked.includes(f)))}
     fs=fs.filter((f,i,a)=>a.findIndex(x=>x.id===f.id)===i);
     if(!fs.length&&words.length){const m=FLSay.match(q.value,v.foods,{});fs=[m.food,...m.alts].filter(Boolean)}
@@ -1350,7 +1409,7 @@ function sheetGoals(){
   <div class="fgroup" id="phr">${phrasesHtml()}</div>
   <div class="hint" style="margin:8px 4px 0">When you correct a voice match, it remembers what you said. Remove one it learned wrong and it'll guess again next time.</div>
   <div class="sec" style="margin-top:24px">Data</div>
-  <div class="fgroup">${v.sheetUrl?`<a class="srow" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener"><span>Open the sheet</span>${IC.right}</a>`:''}<div class="srow"><span>Foods in your list</span><em>${v.foods.length}</em></div><div class="srow"><span>Version</span><em>${APP_VERSION}</em></div></div>
+  <div class="fgroup">${v.sheetUrl?`<a class="srow" href="${esc(v.sheetUrl)}" target="_blank" rel="noopener"><span>Open the sheet</span>${IC.right}</a>`:''}<div class="srow"><span>Foods in your list</span><em>${v.foods.filter(f=>!isQuick(f)).length}</em></div><div class="srow"><span>Version</span><em>${APP_VERSION}</em></div></div>
   </div>`;
   if(TH.band==='custom')wheel($('#cwp'));
   // calories move by what each macro change is worth, so a goal set by hand keeps its offset
@@ -1428,7 +1487,7 @@ const ACT={
   ring:d=>{RG={k:d.k};nav(sheetRing)},fold:d=>fold(d.meal),again,group:d=>{GP={meal:d.meal,fid:d.fid};nav(sheetGroup)},ringK:d=>{RG.k=d.k;sheetRing()},
   close:back,done:closeAll,quick:d=>quick(d.id),newFood:()=>openFoodForm(null,AD.q),newFoodScan:()=>{openFoodForm(null,AD.q.trim());startScan(false)},pick:d=>pick(d.id),
 meal:d=>{AM.meal=d.m;sheetEl.querySelectorAll('[data-act=meal]').forEach(c=>{const on=c.dataset.m===d.m;c.classList.toggle('on',on);c.setAttribute('aria-pressed',on)})},
-  adMeal:d=>{AD.meal=d.m;sheetAdd()},
+  adMeal:d=>{AD.meal=d.m;sheetAdd()},quickMacro:openQuick,qaSave:quickSave,qaMeal:d=>{QA.meal=d.m;sheetQuick()},
   adCat:d=>{AD.cat=AD.cat===d.c?null:d.c;sheetEl.querySelectorAll('[data-act=adCat]').forEach(b=>{const on=b.dataset.c===AD.cat;b.classList.toggle('on',on);b.setAttribute('aria-checked',on)});listFoods()},
   amSave,amDelete,editFood:()=>openFoodForm(realId(AM.fid)),hideFood,
   lpAmount:()=>{const e=lpEntry();if(!e)return closeAll();AM={fid:e.foodId,eid:e.id,meal:e.meal,qty:r2(e.qty),was:r2(e.qty)};navReplace(sheetAmount)},
